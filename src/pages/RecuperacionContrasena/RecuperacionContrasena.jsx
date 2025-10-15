@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import "./RecuperacionContrasena.css";
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:4000";
 
 export default function RecuperacionContrasena() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -67,70 +68,128 @@ export default function RecuperacionContrasena() {
     setPopup({ ...popup, show: false });
   };
 
-  const handleStep1Submit = (e) => {
-    e.preventDefault();
-    const validation = validateStep1();
+const handleStep1Submit = async (e) => {
+  e.preventDefault();
+  const validation = validateStep1();
 
-    if (!validation.isValid) {
-      showPopup("error", "Error de validación", validation.error);
+  if (!validation.isValid) {
+    showPopup("error", "Error de validación", validation.error);
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/auth/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: formData.email }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showPopup("error", "Error al enviar código", data.message || "No se pudo enviar el código. Intenta más tarde.");
       return;
     }
 
-    // Simulación de envío de código
     showPopup("success", "¡Código enviado!", `Se ha enviado un código de verificación a ${formData.email}`);
     setTimeout(() => {
       setCurrentStep(2);
       closePopup();
     }, 2000);
-  };
+  } catch (err) {
+    console.error(err);
+    showPopup("error", "Error de conexión", "No se pudo conectar con el servidor.");
+  }
+};
 
-  const handleStep2Submit = (e) => {
-    e.preventDefault();
-    const validation = validateStep2();
 
-    if (!validation.isValid) {
-      showPopup("error", "Error de validación", validation.error);
+const handleStep2Submit = (e) => {
+  e.preventDefault();
+  const validation = validateStep2();
+
+  if (!validation.isValid) {
+    showPopup("error", "Error de validación", validation.error);
+    return;
+  }
+
+  // Pasamos al siguiente paso (el backend validará el código en el reset final)
+  showPopup("success", "¡Código ingresado!", "Ahora puedes establecer tu nueva contraseña.");
+  setTimeout(() => {
+    setCurrentStep(3);
+    closePopup();
+  }, 1500);
+};
+
+
+const handleStep3Submit = async (e) => {
+  e.preventDefault();
+  const validation = validateStep3();
+
+  if (!validation.isValid) {
+    showPopup("error", "Error de validación", validation.error);
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/auth/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: formData.email,
+        code: formData.verificationCode,
+        newPassword: formData.newPassword,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showPopup("error", "Error al actualizar", data.message || "El código es incorrecto o ha expirado.");
       return;
     }
 
-    // Simulación de verificación de código
-    if (formData.verificationCode !== "123456") {
-      showPopup("error", "Código incorrecto", "El código ingresado no es válido. Intenta nuevamente.");
-      return;
-    }
-
-    showPopup("success", "¡Código verificado!", "Ahora puedes establecer tu nueva contraseña.");
-    setTimeout(() => {
-      setCurrentStep(3);
-      closePopup();
-    }, 1500);
-  };
-
-  const handleStep3Submit = (e) => {
-    e.preventDefault();
-    const validation = validateStep3();
-
-    if (!validation.isValid) {
-      showPopup("error", "Error de validación", validation.error);
-      return;
-    }
-
-    // Simulación de cambio de contraseña
     showPopup("success", "¡Contraseña actualizada!", "Tu contraseña ha sido cambiada exitosamente. Serás redirigido al login.");
     setTimeout(() => {
-      showPopup("info", "Redirigiendo...", "En una aplicación real, serías redirigido al login para usar tu nueva contraseña.");
+      window.location.href = "/login";
     }, 2500);
-  };
+  } catch (err) {
+    console.error(err);
+    showPopup("error", "Error de conexión", "No se pudo conectar con el servidor. Intenta nuevamente.");
+  }
+};
 
-  const handleResendCode = () => {
-    showPopup("info", "Código reenviado", `Se ha enviado un nuevo código de verificación a ${formData.email}`);
-  };
 
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+// Reenvía el código (opcional)
+const handleResendCode = async () => {
+  try {
+    const res = await fetch(`${API_URL}/auth/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: formData.email }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showPopup("error", "Error", data.message || "No se pudo reenviar el código.");
+      return;
     }
-  };
+
+    showPopup("info", "Código reenviado", `Se ha enviado un nuevo código de verificación a ${formData.email}`);
+  } catch (err) {
+    console.error(err);
+    showPopup("error", "Error de conexión", "No se pudo contactar al servidor.");
+  }
+};
+
+// Regresar un paso
+const handleBack = () => {
+  if (currentStep > 1) {
+    setCurrentStep(currentStep - 1);
+  }
+};
+
+
 
   const renderStepIndicator = () => (
     <div className="step-indicator">
