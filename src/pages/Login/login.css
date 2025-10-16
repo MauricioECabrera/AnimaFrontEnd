@@ -278,6 +278,116 @@ input[type="password"]:hover {
     0 1px 4px var(--shadow-medium);
 }
 
+/* ===== SEPARADOR ===== */
+.separator {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: var(--spacing-xl) 0;
+  animation: fadeInUp 0.8s ease-out 0.7s both;
+}
+
+.separator::before,
+.separator::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.separator span {
+  padding: 0 var(--spacing-md);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+}
+
+/* ===== BOTÓN DE SPOTIFY ===== */
+.btn-spotify {
+  width: 100%;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background: #1DB954;
+  border: none;
+  border-radius: var(--border-radius);
+  color: var(--white);
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: var(--font-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  box-shadow: 
+    0 4px 15px rgba(29, 185, 84, 0.4),
+    0 2px 8px var(--shadow-medium);
+  margin-bottom: var(--spacing-xl);
+  animation: fadeInUp 0.8s ease-out 0.75s both;
+}
+
+.btn-spotify i {
+  font-size: 1.5rem;
+  transition: transform 0.3s ease;
+}
+
+.btn-spotify::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-spotify:hover {
+  background: #1ed760;
+  transform: translateY(-2px);
+  box-shadow: 
+    0 6px 20px rgba(29, 185, 84, 0.5),
+    0 4px 12px var(--shadow-medium);
+}
+
+.btn-spotify:hover i {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.btn-spotify:hover::before {
+  left: 100%;
+}
+
+.btn-spotify:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 2px 8px rgba(29, 185, 84, 0.3),
+    0 1px 4px var(--shadow-medium);
+}
+
+/* Focus visible para el botón de Spotify */
+.btn-spotify:focus-visible {
+  outline: 2px solid #1DB954;
+  outline-offset: 2px;
+}
+
+/* Animación especial para el ícono de Spotify */
+@keyframes spotifyPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.btn-spotify:hover i {
+  animation: spotifyPulse 1s ease-in-out infinite;
+}
+
+
 /* Enlaces adicionales */
 .extra-links {
   text-align: center;
@@ -581,6 +691,24 @@ input[type="password"]:hover {
   .popup {
     padding: var(--spacing-lg);
     width: 95%;
+  }
+  
+  /* Estilos responsive para Spotify */
+  .btn-spotify {
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: 0.95rem;
+  }
+  
+  .btn-spotify i {
+    font-size: 1.25rem;
+  }
+  
+  .separator {
+    margin: var(--spacing-lg) 0;
+  }
+  
+  .separator span {
+    font-size: 0.8rem;
   }
 }
 

@@ -1,0 +1,587 @@
+/* ===== PERFIL CONTAINER ===== */
+.perfil-container {
+  min-height: 100vh;
+  padding: var(--spacing-xl) var(--spacing-lg);
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* ===== HEADER ===== */
+.perfil-header {
+  text-align: center;
+  margin-bottom: var(--spacing-xxl);
+  animation: fadeIn 0.6s ease-out;
+}
+
+.perfil-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  color: var(--white);
+  margin-bottom: var(--spacing-sm);
+}
+
+.perfil-subtitle {
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 400;
+}
+
+/* ===== CONTENT ===== */
+.perfil-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  animation: slideInUp 0.6s ease-out 0.2s both;
+}
+
+/* ===== CARDS ===== */
+.perfil-card {
+  background: var(--glass-effect);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-xl);
+  transition: all 0.3s ease;
+}
+
+.perfil-card:hover {
+  box-shadow: 0 8px 24px var(--shadow-medium);
+}
+
+.card-header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-size: 1.5rem;
+  font-weight: 600;
+  font-family: var(--font-heading);
+  color: var(--white);
+}
+
+.card-title i {
+  font-size: 1.25rem;
+  color: var(--bright-cyan);
+}
+
+/* ===== AVATAR SECTION ===== */
+.perfil-avatar-section {
+  display: flex;
+  gap: var(--spacing-xl);
+  align-items: flex-start;
+}
+
+.avatar-container {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatar-img,
+.avatar-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+}
+
+.avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--bright-cyan) 0%, var(--accent-teal) 100%);
+  color: var(--white);
+  font-size: 3rem;
+}
+
+.avatar-edit-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: var(--bright-cyan);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 3px solid var(--primary-dark);
+}
+
+.avatar-edit-btn:hover {
+  background: var(--accent-teal);
+  transform: scale(1.1);
+}
+
+.avatar-edit-btn i {
+  font-size: 0.875rem;
+}
+
+/* ===== INFO SECTION ===== */
+.info-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.info-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 1.125rem;
+  color: var(--white);
+  font-weight: 500;
+}
+
+.info-value-with-edit {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.btn-edit {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--border-radius);
+  color: rgba(255, 255, 255, 0.7);
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-edit:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--white);
+  transform: scale(1.05);
+}
+
+/* ===== EDIT NOMBRE ===== */
+.edit-nombre {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.nombre-input {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--border-radius);
+  color: var(--white);
+  font-family: var(--font-primary);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.nombre-input:focus {
+  outline: none;
+  border-color: var(--bright-cyan);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-save,
+.btn-cancel {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-save {
+  background: var(--success);
+  color: var(--white);
+}
+
+.btn-save:hover {
+  background: #218838;
+  transform: scale(1.05);
+}
+
+.btn-cancel {
+  background: var(--error);
+  color: var(--white);
+}
+
+.btn-cancel:hover {
+  background: #c82333;
+  transform: scale(1.05);
+}
+
+/* ===== SPOTIFY CARD ===== */
+.spotify-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Spotify Connected */
+.spotify-connected {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.spotify-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  color: var(--success);
+  font-weight: 500;
+  font-size: 1.125rem;
+}
+
+.spotify-status i {
+  font-size: 1.25rem;
+}
+
+.spotify-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--border-radius-lg);
+}
+
+.spotify-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.spotify-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-xs);
+}
+
+.spotify-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--white);
+}
+
+.spotify-email {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.btn-disconnect {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  border-radius: var(--border-radius);
+  color: #ff6b6b;
+  font-family: var(--font-primary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-disconnect:hover {
+  background: rgba(220, 53, 69, 0.2);
+  color: #ff5252;
+  transform: scale(1.02);
+}
+
+/* Spotify Disconnected */
+.spotify-disconnected {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+}
+
+.spotify-icon-large {
+  font-size: 5rem;
+  color: #1DB954;
+  margin-bottom: var(--spacing-md);
+}
+
+.spotify-disconnected h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  font-family: var(--font-heading);
+  color: var(--white);
+}
+
+.spotify-disconnected p {
+  color: rgba(255, 255, 255, 0.7);
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+.btn-connect-spotify {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-xl);
+  background: #1DB954;
+  color: var(--white);
+  border: none;
+  border-radius: var(--border-radius-lg);
+  font-family: var(--font-primary);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: var(--spacing-md);
+}
+
+.btn-connect-spotify:hover {
+  background: #1ed760;
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(29, 185, 84, 0.3);
+}
+
+.btn-connect-spotify i {
+  font-size: 1.25rem;
+}
+
+/* ===== STATS CARD ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--border-radius-lg);
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--bright-cyan) 0%, var(--accent-teal) 100%);
+  border-radius: var(--border-radius);
+  flex-shrink: 0;
+}
+
+.stat-icon i {
+  font-size: 1.5rem;
+  color: var(--white);
+}
+
+.stat-emoji {
+  font-size: 2rem;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  color: var(--white);
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ===== LOADING ===== */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xxl);
+  color: rgba(255, 255, 255, 0.7);
+  min-height: 50vh;
+}
+
+.loading-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--bright-cyan);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: var(--spacing-md);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== RESPONSIVE ===== */
+
+/* Tablet */
+@media (max-width: 1023px) {
+  .perfil-title {
+    font-size: 2rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .perfil-container {
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+
+  .perfil-title {
+    font-size: 1.75rem;
+  }
+
+  .perfil-subtitle {
+    font-size: 1rem;
+  }
+
+  .perfil-card {
+    padding: var(--spacing-lg);
+  }
+
+  .perfil-avatar-section {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .info-section {
+    width: 100%;
+  }
+
+  .info-item {
+    align-items: center;
+  }
+
+  .avatar-img,
+  .avatar-placeholder {
+    width: 100px;
+    height: 100px;
+  }
+
+  .card-title {
+    font-size: 1.25rem;
+  }
+}
+
+/* Mobile pequeño */
+@media (max-width: 480px) {
+  .perfil-title {
+    font-size: 1.5rem;
+  }
+
+  .avatar-img,
+  .avatar-placeholder {
+    width: 90px;
+    height: 90px;
+  }
+
+  .stat-item {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+}
+
+/* ===== ACCESSIBILITY ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus styles */
+.avatar-edit-btn:focus,
+.btn-edit:focus,
+.btn-save:focus,
+.btn-cancel:focus,
+.btn-disconnect:focus,
+.btn-connect-spotify:focus,
+.nombre-input:focus {
+  outline: 2px solid var(--bright-cyan);
+  outline-offset: 2px;
+}

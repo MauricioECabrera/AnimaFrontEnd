@@ -38,44 +38,56 @@ export default function Login() {
     setPopup({ ...popup, show: false });
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  const validation = validateLoginForm(formData);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const validation = validateLoginForm(formData);
 
-  if (!validation.isValid) {
-    showPopup("error", "Error de validación", validation.error);
-    return;
-  }
-
-  try {
-    const res = await fetch(`${process.env.REACT_APP_API_URL}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      showPopup("error", "Error de inicio de sesión", data.message || "Correo o contraseña incorrectos");
+    if (!validation.isValid) {
+      showPopup("error", "Error de validación", validation.error);
       return;
     }
 
-    // Guardar token y usuario en localStorage
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
+    try {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-    showPopup("success", "¡Inicio de sesión exitoso!", "Bienvenido de nuevo. Serás redirigido a la aplicación principal.");
+      const data = await res.json();
 
-    setTimeout(() => {
-      window.location.href = "/principal"; // redirigir a la vista principal
-    }, 2000);
-  } catch (err) {
-    console.error(err);
-    showPopup("error", "Error de conexión", "No se pudo conectar con el servidor. Intenta nuevamente.");
-  }
-};
+      if (!res.ok) {
+        showPopup("error", "Error de inicio de sesión", data.message || "Correo o contraseña incorrectos");
+        return;
+      }
 
+      // Guardar token y usuario en localStorage
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      showPopup("success", "¡Inicio de sesión exitoso!", "Bienvenido de nuevo. Serás redirigido a la aplicación principal.");
+
+      setTimeout(() => {
+        window.location.href = "/principal";
+      }, 2000);
+    } catch (err) {
+      console.error(err);
+      showPopup("error", "Error de conexión", "No se pudo conectar con el servidor. Intenta nuevamente.");
+    }
+  };
+
+  // ============================================
+  // FUNCIÓN PARA LOGIN CON SPOTIFY
+  // ============================================
+  const handleSpotifyLogin = () => {
+    // 🔴 BACKEND: Aquí debe ir tu URL de OAuth de Spotify
+    // TODO: Reemplazar con tu endpoint de autenticación de Spotify
+    // window.location.href = `${process.env.REACT_APP_API_URL}/auth/spotify`;
+    
+    // Ejemplo de URL (reemplazar con la real):
+    alert("Redirigiendo a Spotify... (Conectar con endpoint del backend)");
+    // window.location.href = "http://localhost:4000/auth/spotify";
+  };
 
   return (
     <>
@@ -137,6 +149,17 @@ const handleSubmit = async (e) => {
             Entrar
           </button>
         </form>
+
+        {/* ===== SEPARADOR ===== */}
+        <div className="separator">
+          <span>o continúa con</span>
+        </div>
+
+        {/* ===== BOTÓN DE SPOTIFY ===== */}
+        <button className="btn-spotify" onClick={handleSpotifyLogin}>
+          <i className="fab fa-spotify"></i>
+          Iniciar sesión con Spotify
+        </button>
 
         <div className="extra-links">
           <Link to="/recuperar-contrasena" className="forgot-password">

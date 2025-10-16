@@ -2,12 +2,20 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
+// Importar Font Awesome
+import '@fortawesome/fontawesome-free/css/all.min.css';
+
 // Páginas
 import Bienvenida from "./pages/Bienvenida/index";
 import Login from "./pages/Login/login";
 import Register from "./pages/Register/register";
 import Principal from "./pages/Principal/principal";
 import RecuperacionContrasena from "./pages/RecuperacionContrasena/RecuperacionContrasena";
+
+// Nuevas páginas
+import Historial from "./pages/Historial/historial";
+import Perfil from "./pages/Perfil/Perfil";
+import Configuracion from "./pages/Configuracion/Configuracion";
 
 // Componente de protección de rutas
 function ProtectedRoute({ children }) {
@@ -60,6 +68,33 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Principal />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/historial"
+          element={
+            <ProtectedRoute>
+              <Historial />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/perfil"
+          element={
+            <ProtectedRoute>
+              <Perfil />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/configuracion"
+          element={
+            <ProtectedRoute>
+              <Configuracion />
             </ProtectedRoute>
           }
         />
