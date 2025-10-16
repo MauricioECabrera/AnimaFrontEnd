@@ -201,11 +201,51 @@ export default function AnimaSimplified() {
     }, 3000);
   };
 
-  const handleLogout = () => {
-    if (window.confirm('¿Estás seguro que deseas cerrar sesión?')) {
-      showNotification('Cerrando sesión...');
+const handleLogout = async () => {
+  if (window.confirm("¿Estás seguro que deseas cerrar sesión?")) {
+    showNotification("Cerrando sesión...");
+
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      if (!token) {
+        showNotification("No hay sesión activa.");
+        window.location.href = "/login";
+        return;
+      }
+
+      // Llamar al backend para invalidar el token
+      const response = await fetch("http://localhost:4000/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("Error al cerrar sesión:", error.message);
+      }
+
+      // Limpiar almacenamiento local/session
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("user");
+
+      showNotification("Sesión cerrada correctamente ✅");
+
+      // Redirigir al login después de un breve retraso
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 1500);
+    } catch (err) {
+      console.error("Error de conexión:", err);
+      showNotification("Error de conexión al cerrar sesión ❌");
     }
-  };
+  }
+};
+
 
   return (
     <div className="app-container">
