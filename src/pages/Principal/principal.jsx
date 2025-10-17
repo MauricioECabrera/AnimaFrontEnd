@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "./principal.css";
 
 export default function AnimaSimplified() {
@@ -6,6 +7,24 @@ export default function AnimaSimplified() {
   const [cameraStream, setCameraStream] = useState(null);
   const [analysisVisible, setAnalysisVisible] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const navigate = useNavigate();
+  const [tokensReady, setTokensReady] = useState(false);
+
+  // 🟢 ESTE useEffect maneja tokens de Spotify y JWT
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const jwt = params.get("jwt");
+  const spotifyToken = params.get("spotify");
+
+  if (jwt && spotifyToken) {
+    localStorage.setItem("token", jwt);
+    localStorage.setItem("spotifyToken", spotifyToken);
+    window.history.replaceState({}, document.title, "/principal");
+  }
+
+  setTokensReady(true);
+}, []);
+
 
   useEffect(() => {
     return () => {
@@ -201,50 +220,44 @@ export default function AnimaSimplified() {
     }, 3000);
   };
 
-const handleLogout = async () => {
-  if (window.confirm("¿Estás seguro que deseas cerrar sesión?")) {
-    showNotification("Cerrando sesión...");
+  const handleLogout = async () => {
+    if (window.confirm("¿Estás seguro que deseas cerrar sesión?")) {
+      showNotification("Cerrando sesión...");
 
-    try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      if (!token) {
-        showNotification("No hay sesión activa.");
-        window.location.href = "/login";
-        return;
+      try {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+        // Invalidar JWT en backend (si aplica)
+        if (token) {
+          await fetch("http://localhost:4000/auth/logout", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          });
+        }
+
+        // 🔴 Limpiar almacenamiento local/session
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("spotifyToken");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("user");
+        sessionStorage.removeItem("spotifyToken");
+
+        showNotification("Sesión cerrada correctamente ✅");
+
+        // Redirigir al login
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1000);
+      } catch (err) {
+        console.error("Error de conexión:", err);
+        showNotification("Error al cerrar sesión ❌");
       }
-
-      // Llamar al backend para invalidar el token
-      const response = await fetch("http://localhost:4000/auth/logout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error("Error al cerrar sesión:", error.message);
-      }
-
-      // Limpiar almacenamiento local/session
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      sessionStorage.removeItem("token");
-      sessionStorage.removeItem("user");
-
-      showNotification("Sesión cerrada correctamente ✅");
-
-      // Redirigir al login después de un breve retraso
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 1500);
-    } catch (err) {
-      console.error("Error de conexión:", err);
-      showNotification("Error de conexión al cerrar sesión ❌");
     }
-  }
-};
+  };
 
 
   return (

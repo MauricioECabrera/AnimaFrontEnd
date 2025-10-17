@@ -79,15 +79,11 @@ export default function Login() {
   // ============================================
   // FUNCIÓN PARA LOGIN CON SPOTIFY
   // ============================================
-  const handleSpotifyLogin = () => {
-    // 🔴 BACKEND: Aquí debe ir tu URL de OAuth de Spotify
-    // TODO: Reemplazar con tu endpoint de autenticación de Spotify
-    // window.location.href = `${process.env.REACT_APP_API_URL}/auth/spotify`;
-    
-    // Ejemplo de URL (reemplazar con la real):
-    alert("Redirigiendo a Spotify... (Conectar con endpoint del backend)");
-    // window.location.href = "http://localhost:4000/auth/spotify";
-  };
+const handleSpotifyLogin = () => {
+  // Redirige al backend (que a su vez manda al login de Spotify)
+  window.location.href = `${process.env.REACT_APP_API_URL}/auth/spotify/login`;
+};
+
 
   return (
     <>
