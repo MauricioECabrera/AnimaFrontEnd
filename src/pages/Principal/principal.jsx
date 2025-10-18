@@ -133,17 +133,45 @@ export default function AnimaSimplified() {
     
     showNotification('Analizando emoción...');
     
-    // 🔴 AQUÍ SE CONECTARÁ CON EL BACKEND
-    // TODO: Enviar capturedPhoto al backend para análisis con AWS Rekognition
-    // const response = await fetch('http://localhost:4000/api/analyze-emotion', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ image: capturedPhoto })
-    // });
-    // const data = await response.json();
-    // setDetectedEmotion(data.emotion);
+    // 🔴 TODO BACKEND: AQUÍ SE CONECTARÁ CON EL BACKEND
+    // El capturedPhoto está en formato base64, listo para enviar
+    // 
+    // Ejemplo de implementación:
+    // 
+    // const analyzeEmotion = async () => {
+    //   try {
+    //     const response = await fetch('http://localhost:4000/api/analyze-emotion', {
+    //       method: 'POST',
+    //       headers: { 
+    //         'Content-Type': 'application/json',
+    //         'Authorization': `Bearer ${localStorage.getItem('token')}`
+    //       },
+    //       body: JSON.stringify({ 
+    //         image: capturedPhoto // Base64 string
+    //       })
+    //     });
+    //     
+    //     const data = await response.json();
+    //     // Formato esperado del backend:
+    //     // {
+    //     //   emotion: { 
+    //     //     name: 'Felicidad', 
+    //     //     icon: '😊', 
+    //     //     confidence: 85 
+    //     //   }
+    //     // }
+    //     
+    //     setDetectedEmotion(data.emotion);
+    //     showAnalysisResults(data.emotion);
+    //   } catch (error) {
+    //     console.error('Error al analizar emoción:', error);
+    //     showNotification('Error al analizar la emoción', 'error');
+    //   }
+    // };
+    // 
+    // analyzeEmotion();
     
-    // Por ahora: emoción aleatoria
+    // ⚠️ Por ahora: emoción aleatoria (ELIMINAR cuando el backend esté listo)
     setTimeout(() => {
       const emotions = [
         { name: 'Felicidad', icon: '😊', confidence: 85 },
