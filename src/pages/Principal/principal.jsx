@@ -128,65 +128,36 @@ export default function AnimaSimplified() {
     showNotification('Preparando cámara nuevamente...');
   };
 
-  const confirmPhoto = () => {
-    if (!capturedPhoto) return;
-    
-    showNotification('Analizando emoción...');
-    
-    // 🔴 TODO BACKEND: AQUÍ SE CONECTARÁ CON EL BACKEND
-    // El capturedPhoto está en formato base64, listo para enviar
-    // 
-    // Ejemplo de implementación:
-    // 
-    // const analyzeEmotion = async () => {
-    //   try {
-    //     const response = await fetch('http://localhost:4000/api/analyze-emotion', {
-    //       method: 'POST',
-    //       headers: { 
-    //         'Content-Type': 'application/json',
-    //         'Authorization': `Bearer ${localStorage.getItem('token')}`
-    //       },
-    //       body: JSON.stringify({ 
-    //         image: capturedPhoto // Base64 string
-    //       })
-    //     });
-    //     
-    //     const data = await response.json();
-    //     // Formato esperado del backend:
-    //     // {
-    //     //   emotion: { 
-    //     //     name: 'Felicidad', 
-    //     //     icon: '😊', 
-    //     //     confidence: 85 
-    //     //   }
-    //     // }
-    //     
-    //     setDetectedEmotion(data.emotion);
-    //     showAnalysisResults(data.emotion);
-    //   } catch (error) {
-    //     console.error('Error al analizar emoción:', error);
-    //     showNotification('Error al analizar la emoción', 'error');
-    //   }
-    // };
-    // 
-    // analyzeEmotion();
-    
-    // ⚠️ Por ahora: emoción aleatoria (ELIMINAR cuando el backend esté listo)
-    setTimeout(() => {
-      const emotions = [
-        { name: 'Felicidad', icon: '😊', confidence: 85 },
-        { name: 'Calma', icon: '😌', confidence: 78 },
-        { name: 'Energía', icon: '🎵', confidence: 92 },
-        { name: 'Concentración', icon: '🧘', confidence: 67 },
-        { name: 'Tristeza', icon: '😔', confidence: 75 },
-        { name: 'Sorpresa', icon: '😮', confidence: 88 }
-      ];
-      
-      const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
-      setDetectedEmotion(randomEmotion);
-      showAnalysisResults(randomEmotion);
-    }, 2000);
-  };
+const confirmPhoto = async () => {
+  if (!capturedPhoto) return;
+
+  showNotification('Analizando emoción con inteligencia artificial... 🧠');
+
+  try {
+    const response = await fetch("http://localhost:4000/emociones/analizar", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({ image: capturedPhoto }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      showNotification(data.message || "No se pudo analizar la emoción", "error");
+      return;
+    }
+
+    setDetectedEmotion(data.emotion);
+    showAnalysisResults(data.emotion);
+  } catch (error) {
+    console.error("Error al analizar emoción:", error);
+    showNotification("Error al conectar con el servidor", "error");
+  }
+};
+
 
   const uploadPhoto = () => {
     const input = document.createElement('input');
@@ -464,7 +435,6 @@ export default function AnimaSimplified() {
                       <p id="emotion-confidence" className="emotion-confidence">
                         Confianza: {detectedEmotion.confidence}%
                       </p>
-                      <p className="temp-note">⚠️ Emoción temporal (backend pendiente)</p>
                     </div>
 
                     {/* Music Recommendations */}
