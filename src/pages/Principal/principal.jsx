@@ -5,26 +5,27 @@ import "./principal.css";
 export default function AnimaSimplified() {
   const [emotionPopup, setEmotionPopup] = useState(false);
   const [cameraStream, setCameraStream] = useState(null);
+  const [capturedPhoto, setCapturedPhoto] = useState(null);
+  const [detectedEmotion, setDetectedEmotion] = useState(null);
   const [analysisVisible, setAnalysisVisible] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const [tokensReady, setTokensReady] = useState(false);
 
   // 🟢 ESTE useEffect maneja tokens de Spotify y JWT
-useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  const jwt = params.get("jwt");
-  const spotifyToken = params.get("spotify");
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const jwt = params.get("jwt");
+    const spotifyToken = params.get("spotify");
 
-  if (jwt && spotifyToken) {
-    localStorage.setItem("token", jwt);
-    localStorage.setItem("spotifyToken", spotifyToken);
-    window.history.replaceState({}, document.title, "/principal");
-  }
+    if (jwt && spotifyToken) {
+      localStorage.setItem("token", jwt);
+      localStorage.setItem("spotifyToken", spotifyToken);
+      window.history.replaceState({}, document.title, "/principal");
+    }
 
-  setTokensReady(true);
-}, []);
-
+    setTokensReady(true);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -97,11 +98,66 @@ useEffect(() => {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0);
       
-      showAnalysisResults();
+      const photoDataUrl = canvas.toDataURL('image/jpeg');
+      setCapturedPhoto(photoDataUrl);
       
+      // Detener la cámara
       cameraStream.getTracks().forEach(track => track.stop());
       setCameraStream(null);
+      
+      // Mostrar la foto capturada
+      const preview = document.getElementById('camera-preview');
+      if (preview) {
+        const img = document.createElement('img');
+        img.src = photoDataUrl;
+        img.style.width = '100%';
+        img.style.borderRadius = '12px';
+        preview.innerHTML = '';
+        preview.appendChild(img);
+      }
+      
+      showNotification('Foto capturada correctamente');
     }
+  };
+
+  const retakePhoto = () => {
+    setCapturedPhoto(null);
+    setDetectedEmotion(null);
+    setAnalysisVisible(false);
+    resetCameraInterface();
+    showNotification('Preparando cámara nuevamente...');
+  };
+
+  const confirmPhoto = () => {
+    if (!capturedPhoto) return;
+    
+    showNotification('Analizando emoción...');
+    
+    // 🔴 AQUÍ SE CONECTARÁ CON EL BACKEND
+    // TODO: Enviar capturedPhoto al backend para análisis con AWS Rekognition
+    // const response = await fetch('http://localhost:4000/api/analyze-emotion', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ image: capturedPhoto })
+    // });
+    // const data = await response.json();
+    // setDetectedEmotion(data.emotion);
+    
+    // Por ahora: emoción aleatoria
+    setTimeout(() => {
+      const emotions = [
+        { name: 'Felicidad', icon: '😊', confidence: 85 },
+        { name: 'Calma', icon: '😌', confidence: 78 },
+        { name: 'Energía', icon: '🎵', confidence: 92 },
+        { name: 'Concentración', icon: '🧘', confidence: 67 },
+        { name: 'Tristeza', icon: '😔', confidence: 75 },
+        { name: 'Sorpresa', icon: '😮', confidence: 88 }
+      ];
+      
+      const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+      setDetectedEmotion(randomEmotion);
+      showAnalysisResults(randomEmotion);
+    }, 2000);
   };
 
   const uploadPhoto = () => {
@@ -113,8 +169,11 @@ useEffect(() => {
       if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
+          const photoDataUrl = e.target.result;
+          setCapturedPhoto(photoDataUrl);
+          
           const img = document.createElement('img');
-          img.src = e.target.result;
+          img.src = photoDataUrl;
           img.style.width = '100%';
           img.style.borderRadius = '12px';
           
@@ -124,7 +183,7 @@ useEffect(() => {
             preview.appendChild(img);
           }
           
-          showAnalysisResults();
+          showNotification('Imagen cargada correctamente');
         };
         reader.readAsDataURL(file);
       }
@@ -132,29 +191,18 @@ useEffect(() => {
     input.click();
   };
 
-  const showAnalysisResults = () => {
+  const showAnalysisResults = (emotion) => {
     setAnalysisVisible(true);
     
-    setTimeout(() => {
-      const emotions = [
-        { name: 'Felicidad', icon: '😊', confidence: 85 },
-        { name: 'Calma', icon: '😌', confidence: 78 },
-        { name: 'Energía', icon: '🎵', confidence: 92 },
-        { name: 'Concentración', icon: '🧘', confidence: 67 }
-      ];
-      
-      const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
-      
-      const emotionIcon = document.getElementById('emotion-icon');
-      const emotionName = document.getElementById('emotion-name');
-      const emotionConfidence = document.getElementById('emotion-confidence');
-      
-      if (emotionIcon) emotionIcon.textContent = randomEmotion.icon;
-      if (emotionName) emotionName.textContent = randomEmotion.name;
-      if (emotionConfidence) emotionConfidence.textContent = `Confianza: ${randomEmotion.confidence}%`;
-      
-      generatePlaylist(randomEmotion.name);
-    }, 2000);
+    const emotionIcon = document.getElementById('emotion-icon');
+    const emotionName = document.getElementById('emotion-name');
+    const emotionConfidence = document.getElementById('emotion-confidence');
+    
+    if (emotionIcon) emotionIcon.textContent = emotion.icon;
+    if (emotionName) emotionName.textContent = emotion.name;
+    if (emotionConfidence) emotionConfidence.textContent = `Confianza: ${emotion.confidence}%`;
+    
+    generatePlaylist(emotion.name);
   };
 
   const generatePlaylist = (emotion) => {
@@ -162,7 +210,9 @@ useEffect(() => {
       'Felicidad': ['Happy - Pharrell Williams', 'Good as Hell - Lizzo', 'Uptown Funk - Bruno Mars'],
       'Calma': ['Weightless - Marconi Union', 'River - Joni Mitchell', 'Mad World - Gary Jules'],
       'Energía': ['Eye of the Tiger - Survivor', 'Thunder - Imagine Dragons', 'High Hopes - Panic!'],
-      'Concentración': ['Clair de Lune - Debussy', 'Gymnopédie No.1 - Satie', 'The Blue Notebooks - Max Richter']
+      'Concentración': ['Clair de Lune - Debussy', 'Gymnopédie No.1 - Satie', 'The Blue Notebooks - Max Richter'],
+      'Tristeza': ['Someone Like You - Adele', 'The Scientist - Coldplay', 'Fix You - Coldplay'],
+      'Sorpresa': ['Bohemian Rhapsody - Queen', 'Mr. Blue Sky - ELO', 'September - Earth, Wind & Fire']
     };
     
     const songs = playlists[emotion] || ['Música personalizada para ti'];
@@ -195,6 +245,9 @@ useEffect(() => {
       startBtn.innerHTML = '<i class="fas fa-video"></i> Activar Cámara';
     }
     if (takeBtn) takeBtn.disabled = true;
+    
+    setCapturedPhoto(null);
+    setDetectedEmotion(null);
     setAnalysisVisible(false);
   };
 
@@ -227,7 +280,6 @@ useEffect(() => {
       try {
         const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
-        // Invalidar JWT en backend (si aplica)
         if (token) {
           await fetch("http://localhost:4000/auth/logout", {
             method: "POST",
@@ -238,7 +290,6 @@ useEffect(() => {
           });
         }
 
-        // 🔴 Limpiar almacenamiento local/session
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         localStorage.removeItem("spotifyToken");
@@ -248,7 +299,6 @@ useEffect(() => {
 
         showNotification("Sesión cerrada correctamente ✅");
 
-        // Redirigir al login
         setTimeout(() => {
           window.location.href = "/login";
         }, 1000);
@@ -258,7 +308,6 @@ useEffect(() => {
       }
     }
   };
-
 
   return (
     <div className="app-container">
@@ -275,14 +324,19 @@ useEffect(() => {
 
           {/* Menu Items */}
           <nav className="sidebar-nav">
-            <button className="nav-item">
+            <button onClick={() => navigate('/perfil')} className="nav-item">
               <i className="fas fa-user"></i>
               <span>Perfil</span>
             </button>
             
-            <button className="nav-item">
+            <button onClick={() => navigate('/historial')} className="nav-item">
               <i className="fas fa-history"></i>
               <span>Historial</span>
+            </button>
+
+            <button onClick={() => navigate('/configuracion')} className="nav-item">
+              <i className="fas fa-cog"></i>
+              <span>Configuración</span>
             </button>
           </nav>
 
@@ -338,32 +392,51 @@ useEffect(() => {
 
                 {/* Camera Controls */}
                 <div className="camera-controls">
-                  <button id="start-camera" onClick={startCamera} className="btn-camera btn-primary">
-                    <i className="fas fa-video"></i>
-                    Activar Cámara
-                  </button>
-                  
-                  <button id="take-photo" onClick={capturePhoto} disabled className="btn-camera btn-success">
-                    <i className="fas fa-camera"></i>
-                    Capturar Foto
-                  </button>
-                  
-                  <button onClick={uploadPhoto} className="btn-camera btn-secondary">
-                    <i className="fas fa-upload"></i>
-                    Subir Imagen
-                  </button>
+                  {!capturedPhoto ? (
+                    <>
+                      <button id="start-camera" onClick={startCamera} className="btn-camera btn-primary">
+                        <i className="fas fa-video"></i>
+                        Activar Cámara
+                      </button>
+                      
+                      <button id="take-photo" onClick={capturePhoto} disabled className="btn-camera btn-success">
+                        <i className="fas fa-camera"></i>
+                        Capturar Foto
+                      </button>
+                      
+                      <button onClick={uploadPhoto} className="btn-camera btn-secondary">
+                        <i className="fas fa-upload"></i>
+                        Subir Imagen
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={retakePhoto} className="btn-camera btn-warning">
+                        <i className="fas fa-redo"></i>
+                        Tomar otra foto
+                      </button>
+                      
+                      <button onClick={confirmPhoto} className="btn-camera btn-success" disabled={analysisVisible}>
+                        <i className="fas fa-check"></i>
+                        Confirmar y analizar
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
               {/* Analysis Results */}
-              {analysisVisible && (
+              {analysisVisible && detectedEmotion && (
                 <div className="analysis-section">
                   <div className="analysis-grid">
                     {/* Emotion Display */}
                     <div className="emotion-display">
-                      <div id="emotion-icon" className="emotion-icon">😊</div>
-                      <h4 id="emotion-name" className="emotion-name">Analizando...</h4>
-                      <p id="emotion-confidence" className="emotion-confidence">Confianza: --</p>
+                      <div id="emotion-icon" className="emotion-icon">{detectedEmotion.icon}</div>
+                      <h4 id="emotion-name" className="emotion-name">{detectedEmotion.name}</h4>
+                      <p id="emotion-confidence" className="emotion-confidence">
+                        Confianza: {detectedEmotion.confidence}%
+                      </p>
+                      <p className="temp-note">⚠️ Emoción temporal (backend pendiente)</p>
                     </div>
 
                     {/* Music Recommendations */}

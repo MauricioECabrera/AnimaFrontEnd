@@ -15,6 +15,7 @@
   /* Colores adicionales */
   --white: #ffffff;
   --success: #28a745;
+  --warning: #ffc107;
   --error: #dc3545;
   --info: #17a2b8;
   
@@ -422,6 +423,12 @@ body {
   color: var(--white);
 }
 
+.btn-warning {
+  background: var(--warning);
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
 .btn-secondary {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -470,6 +477,17 @@ body {
 
 .emotion-confidence {
   color: rgba(255, 255, 255, 0.7);
+  margin-bottom: var(--spacing-sm);
+}
+
+.temp-note {
+  font-size: 0.75rem;
+  color: var(--warning);
+  margin-top: var(--spacing-sm);
+  font-style: italic;
+  background: rgba(255, 193, 7, 0.1);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius);
 }
 
 .music-section {

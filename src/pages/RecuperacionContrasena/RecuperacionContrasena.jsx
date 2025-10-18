@@ -19,9 +19,78 @@ export default function RecuperacionContrasena() {
     confirmPassword: ""
   });
 
+  const [passwordStrength, setPasswordStrength] = useState({
+    score: 0,
+    feedback: [],
+  });
+
+  // Lista de contraseñas comunes que NO se permiten
+  const commonPasswords = [
+    "123456", "password", "123456789", "12345678", "12345", "1234567",
+    "password1", "123123", "1234567890", "qwerty", "abc123", "111111",
+    "letmein", "welcome", "monkey", "dragon", "master", "sunshine",
+    "princess", "password123", "qwerty123", "admin", "root", "user"
+  ];
+
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  };
+
+  // 🔒 VALIDACIÓN DE CONTRASEÑA SEGURA (igual que en Register)
+  const validatePasswordStrength = (password) => {
+    const feedback = [];
+    let score = 0;
+
+    // 1. Verificar longitud mínima
+    if (password.length < 8) {
+      feedback.push("Debe tener al menos 8 caracteres");
+    } else {
+      score += 1;
+    }
+
+    // 2. Verificar letra mayúscula
+    if (!/[A-Z]/.test(password)) {
+      feedback.push("Debe contener al menos una letra mayúscula");
+    } else {
+      score += 1;
+    }
+
+    // 3. Verificar letra minúscula
+    if (!/[a-z]/.test(password)) {
+      feedback.push("Debe contener al menos una letra minúscula");
+    } else {
+      score += 1;
+    }
+
+    // 4. Verificar número
+    if (!/[0-9]/.test(password)) {
+      feedback.push("Debe contener al menos un número");
+    } else {
+      score += 1;
+    }
+
+    // 5. Verificar carácter especial
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      feedback.push("Debe contener al menos un carácter especial (!@#$%^&*)");
+    } else {
+      score += 1;
+    }
+
+    // 6. Verificar que no sea una contraseña común
+    const lowerPassword = password.toLowerCase();
+    if (commonPasswords.includes(lowerPassword)) {
+      feedback.push("Esta contraseña es muy común. Elige una más segura");
+      score = 0; // Contraseña común = score 0
+    }
+
+    // 7. Verificar patrones secuenciales
+    if (/(.)\1{2,}/.test(password)) {
+      feedback.push("Evita repetir el mismo carácter consecutivamente");
+      score = Math.max(0, score - 1);
+    }
+
+    return { score, feedback };
   };
 
   const validateStep1 = () => {
@@ -48,15 +117,21 @@ export default function RecuperacionContrasena() {
     if (!formData.newPassword) {
       return { isValid: false, error: "La nueva contraseña es obligatoria" };
     }
-    if (formData.newPassword.length < 6) {
-      return { isValid: false, error: "La contraseña debe tener al menos 6 caracteres" };
-    }
     if (!formData.confirmPassword) {
       return { isValid: false, error: "La confirmación de contraseña es obligatoria" };
     }
+
+    // 🔒 VALIDACIÓN DE CONTRASEÑA SEGURA
+    const passwordValidation = validatePasswordStrength(formData.newPassword);
+    if (passwordValidation.score < 5) {
+      const errorMsg = "Contraseña insegura:\n" + passwordValidation.feedback.join("\n");
+      return { isValid: false, error: errorMsg };
+    }
+
     if (formData.newPassword !== formData.confirmPassword) {
       return { isValid: false, error: "Las contraseñas no coinciden" };
     }
+
     return { isValid: true };
   };
 
@@ -68,128 +143,166 @@ export default function RecuperacionContrasena() {
     setPopup({ ...popup, show: false });
   };
 
-const handleStep1Submit = async (e) => {
-  e.preventDefault();
-  const validation = validateStep1();
+  // Actualizar indicador de fortaleza en tiempo real
+  const handlePasswordChange = (e) => {
+    const newPassword = e.target.value;
+    setFormData({ ...formData, newPassword });
+    
+    if (newPassword) {
+      const strength = validatePasswordStrength(newPassword);
+      setPasswordStrength(strength);
+    } else {
+      setPasswordStrength({ score: 0, feedback: [] });
+    }
+  };
 
-  if (!validation.isValid) {
-    showPopup("error", "Error de validación", validation.error);
-    return;
-  }
+  const getPasswordStrengthLabel = (score) => {
+    if (score === 0) return "Muy débil";
+    if (score <= 2) return "Débil";
+    if (score <= 3) return "Aceptable";
+    if (score <= 4) return "Buena";
+    return "Excelente";
+  };
 
-  try {
-    const res = await fetch(`${API_URL}/auth/forgot-password`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: formData.email }),
-    });
+  const getPasswordStrengthColor = (score) => {
+    if (score === 0) return "strength-very-weak";
+    if (score <= 2) return "strength-weak";
+    if (score <= 3) return "strength-fair";
+    if (score <= 4) return "strength-good";
+    return "strength-excellent";
+  };
 
-    const data = await res.json();
+  const handleStep1Submit = async (e) => {
+    e.preventDefault();
+    const validation = validateStep1();
 
-    if (!res.ok) {
-      showPopup("error", "Error al enviar código", data.message || "No se pudo enviar el código. Intenta más tarde.");
+    if (!validation.isValid) {
+      showPopup("error", "Error de validación", validation.error);
       return;
     }
 
-    showPopup("success", "¡Código enviado!", `Se ha enviado un código de verificación a ${formData.email}`);
+    try {
+      const res = await fetch(`${API_URL}/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showPopup("error", "Error al enviar código", data.message || "No se pudo enviar el código. Intenta más tarde.");
+        return;
+      }
+
+      showPopup("success", "¡Código enviado!", `Se ha enviado un código de verificación a ${formData.email}`);
+      setTimeout(() => {
+        setCurrentStep(2);
+        closePopup();
+      }, 2000);
+    } catch (err) {
+      console.error(err);
+      showPopup("error", "Error de conexión", "No se pudo conectar con el servidor.");
+    }
+  };
+
+  const handleStep2Submit = (e) => {
+    e.preventDefault();
+    const validation = validateStep2();
+
+    if (!validation.isValid) {
+      showPopup("error", "Error de validación", validation.error);
+      return;
+    }
+
+    // Pasamos al siguiente paso (el backend validará el código en el reset final)
+    showPopup("success", "¡Código ingresado!", "Ahora puedes establecer tu nueva contraseña.");
     setTimeout(() => {
-      setCurrentStep(2);
+      setCurrentStep(3);
       closePopup();
-    }, 2000);
-  } catch (err) {
-    console.error(err);
-    showPopup("error", "Error de conexión", "No se pudo conectar con el servidor.");
-  }
-};
+    }, 1500);
+  };
 
+  const handleStep3Submit = async (e) => {
+    e.preventDefault();
+    const validation = validateStep3();
 
-const handleStep2Submit = (e) => {
-  e.preventDefault();
-  const validation = validateStep2();
-
-  if (!validation.isValid) {
-    showPopup("error", "Error de validación", validation.error);
-    return;
-  }
-
-  // Pasamos al siguiente paso (el backend validará el código en el reset final)
-  showPopup("success", "¡Código ingresado!", "Ahora puedes establecer tu nueva contraseña.");
-  setTimeout(() => {
-    setCurrentStep(3);
-    closePopup();
-  }, 1500);
-};
-
-
-const handleStep3Submit = async (e) => {
-  e.preventDefault();
-  const validation = validateStep3();
-
-  if (!validation.isValid) {
-    showPopup("error", "Error de validación", validation.error);
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_URL}/auth/reset-password`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: formData.email,
-        code: formData.verificationCode,
-        newPassword: formData.newPassword,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      showPopup("error", "Error al actualizar", data.message || "El código es incorrecto o ha expirado.");
+    if (!validation.isValid) {
+      showPopup("error", "Error de validación", validation.error);
       return;
     }
 
-    showPopup("success", "¡Contraseña actualizada!", "Tu contraseña ha sido cambiada exitosamente. Serás redirigido al login.");
-    setTimeout(() => {
-      window.location.href = "/login";
-    }, 2500);
-  } catch (err) {
-    console.error(err);
-    showPopup("error", "Error de conexión", "No se pudo conectar con el servidor. Intenta nuevamente.");
-  }
-};
+    try {
+      // 🔴 TODO: VALIDAR EN EL BACKEND QUE LA NUEVA CONTRASEÑA NO SEA IGUAL A LA ANTERIOR
+      // El backend debe:
+      // 1. Obtener el hash de la contraseña actual del usuario desde la base de datos
+      // 2. Comparar con bcrypt.compare(newPassword, oldPasswordHash)
+      // 3. Si son iguales, retornar error: "No puedes usar tu contraseña anterior"
+      // 4. Si son diferentes, proceder con el cambio de contraseña
+      //
+      // Ejemplo de validación en el backend (Node.js/Express):
+      // const user = await User.findOne({ email });
+      // const isSamePassword = await bcrypt.compare(newPassword, user.password);
+      // if (isSamePassword) {
+      //   return res.status(400).json({ message: "No puedes usar tu contraseña anterior" });
+      // }
 
+      const res = await fetch(`${API_URL}/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          code: formData.verificationCode,
+          newPassword: formData.newPassword,
+        }),
+      });
 
-// Reenvía el código (opcional)
-const handleResendCode = async () => {
-  try {
-    const res = await fetch(`${API_URL}/auth/forgot-password`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: formData.email }),
-    });
+      const data = await res.json();
 
-    const data = await res.json();
+      if (!res.ok) {
+        showPopup("error", "Error al actualizar", data.message || "El código es incorrecto o ha expirado.");
+        return;
+      }
 
-    if (!res.ok) {
-      showPopup("error", "Error", data.message || "No se pudo reenviar el código.");
-      return;
+      showPopup("success", "¡Contraseña actualizada!", "Tu contraseña ha sido cambiada exitosamente. Serás redirigido al login.");
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 2500);
+    } catch (err) {
+      console.error(err);
+      showPopup("error", "Error de conexión", "No se pudo conectar con el servidor. Intenta nuevamente.");
     }
+  };
 
-    showPopup("info", "Código reenviado", `Se ha enviado un nuevo código de verificación a ${formData.email}`);
-  } catch (err) {
-    console.error(err);
-    showPopup("error", "Error de conexión", "No se pudo contactar al servidor.");
-  }
-};
+  // Reenvía el código (opcional)
+  const handleResendCode = async () => {
+    try {
+      const res = await fetch(`${API_URL}/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email }),
+      });
 
-// Regresar un paso
-const handleBack = () => {
-  if (currentStep > 1) {
-    setCurrentStep(currentStep - 1);
-  }
-};
+      const data = await res.json();
 
+      if (!res.ok) {
+        showPopup("error", "Error", data.message || "No se pudo reenviar el código.");
+        return;
+      }
 
+      showPopup("info", "Código reenviado", `Se ha enviado un nuevo código de verificación a ${formData.email}`);
+    } catch (err) {
+      console.error(err);
+      showPopup("error", "Error de conexión", "No se pudo contactar al servidor.");
+    }
+  };
+
+  // Regresar un paso
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
 
   const renderStepIndicator = () => (
     <div className="step-indicator">
@@ -282,9 +395,33 @@ const handleBack = () => {
             id="newPassword"
             placeholder="********"
             value={formData.newPassword}
-            onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+            onChange={handlePasswordChange}
             required
           />
+          
+          {/* Indicador de fortaleza de contraseña */}
+          {formData.newPassword && (
+            <div className="password-strength-container">
+              <div className="password-strength-bar">
+                <div 
+                  className={`password-strength-fill ${getPasswordStrengthColor(passwordStrength.score)}`}
+                  style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
+                ></div>
+              </div>
+              <div className="password-strength-label">
+                <span className={getPasswordStrengthColor(passwordStrength.score)}>
+                  {getPasswordStrengthLabel(passwordStrength.score)}
+                </span>
+              </div>
+              {passwordStrength.feedback.length > 0 && (
+                <ul className="password-feedback">
+                  {passwordStrength.feedback.map((item, index) => (
+                    <li key={index}>{item}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
         
         <div className="form-group">
@@ -318,7 +455,7 @@ const handleBack = () => {
               </span>
               <h3 className="popup-title">{popup.title}</h3>
             </div>
-            <p className="popup-message">{popup.message}</p>
+            <p className="popup-message" style={{ whiteSpace: 'pre-line' }}>{popup.message}</p>
             <button className="popup-btn" onClick={closePopup}>
               Entendido
             </button>
