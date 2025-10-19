@@ -9,8 +9,9 @@ export default function AnimaSimplified() {
   const [detectedEmotion, setDetectedEmotion] = useState(null);
   const [analysisVisible, setAnalysisVisible] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCameraActive, setIsCameraActive] = useState(false);
   const navigate = useNavigate();
-  const [tokensReady, setTokensReady] = useState(false);
+
 
   // 🟢 ESTE useEffect maneja tokens de Spotify y JWT
   useEffect(() => {
@@ -24,7 +25,7 @@ export default function AnimaSimplified() {
       window.history.replaceState({}, document.title, "/principal");
     }
 
-    setTokensReady(true);
+
   }, []);
 
   useEffect(() => {
@@ -52,13 +53,11 @@ export default function AnimaSimplified() {
 
   const startCamera = async () => {
     try {
-      const startBtn = document.getElementById('start-camera');
-      if (startBtn) {
-        startBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando...';
-      }
+      console.log("🎥 Iniciando cámara...");
       
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       setCameraStream(stream);
+      setIsCameraActive(true); // ✅ ACTIVAR ESTADO
       
       const videoElement = document.createElement('video');
       videoElement.srcObject = stream;
@@ -72,58 +71,72 @@ export default function AnimaSimplified() {
         preview.appendChild(videoElement);
       }
       
-      const takeBtn = document.getElementById('take-photo');
-      if (takeBtn) takeBtn.disabled = false;
-      if (startBtn) startBtn.style.display = 'none';
-      
       showNotification('Cámara activada correctamente');
+      console.log("✅ Cámara activada");
     } catch (error) {
+      console.error("❌ Error al activar cámara:", error);
       showNotification('Error al acceder a la cámara', 'error');
-      const startBtn = document.getElementById('start-camera');
-      if (startBtn) {
-        startBtn.innerHTML = '<i class="fas fa-video"></i> Activar Cámara';
-      }
+      setIsCameraActive(false);
     }
   };
 
   const capturePhoto = () => {
-    if (!cameraStream) return;
+  console.log("📸 Intentando capturar foto...");
+  console.log("Stream activo:", !!cameraStream);
+  
+  if (!cameraStream) {
+    console.error("❌ No hay stream de cámara");
+    showNotification('Activa la cámara primero', 'error');
+    return;
+  }
+  
+  const video = document.querySelector('#camera-preview video');
+  console.log("Video encontrado:", !!video);
+  
+  if (video) {
+    console.log("📷 Capturando imagen del video...");
     
-    const video = document.querySelector('#camera-preview video');
-    if (video) {
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0);
-      
-      const photoDataUrl = canvas.toDataURL('image/jpeg');
-      setCapturedPhoto(photoDataUrl);
-      
-      // Detener la cámara
-      cameraStream.getTracks().forEach(track => track.stop());
-      setCameraStream(null);
-      
-      // Mostrar la foto capturada
-      const preview = document.getElementById('camera-preview');
-      if (preview) {
-        const img = document.createElement('img');
-        img.src = photoDataUrl;
-        img.style.width = '100%';
-        img.style.borderRadius = '12px';
-        preview.innerHTML = '';
-        preview.appendChild(img);
-      }
-      
-      showNotification('Foto capturada correctamente');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    console.log("Canvas creado:", canvas.width, "x", canvas.height);
+    
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    
+    const photoDataUrl = canvas.toDataURL('image/jpeg');
+    setCapturedPhoto(photoDataUrl);
+    
+    // Detener la cámara
+    cameraStream.getTracks().forEach(track => track.stop());
+    setCameraStream(null);
+    setIsCameraActive(false);
+    
+    // Mostrar la foto capturada
+    const preview = document.getElementById('camera-preview');
+    if (preview) {
+      const img = document.createElement('img');
+      img.src = photoDataUrl;
+      img.style.width = '100%';
+      img.style.borderRadius = '12px';
+      preview.innerHTML = '';
+      preview.appendChild(img);
     }
-  };
+    
+    showNotification('Foto capturada correctamente');
+    console.log("✅ Foto capturada");
+  } else {
+    console.error("❌ No se encontró el elemento video");
+    showNotification('Error al capturar foto', 'error');
+  }
+};
 
   const retakePhoto = () => {
     setCapturedPhoto(null);
     setDetectedEmotion(null);
     setAnalysisVisible(false);
+    setIsCameraActive(false);
     resetCameraInterface();
     showNotification('Preparando cámara nuevamente...');
   };
@@ -393,12 +406,20 @@ const confirmPhoto = async () => {
                 <div className="camera-controls">
                   {!capturedPhoto ? (
                     <>
-                      <button id="start-camera" onClick={startCamera} className="btn-camera btn-primary">
-                        <i className="fas fa-video"></i>
-                        Activar Cámara
+                      <button 
+                        onClick={startCamera} 
+                        disabled={isCameraActive}
+                        className="btn-camera btn-primary"
+                      >
+                        <i className={`fas ${isCameraActive ? 'fa-check' : 'fa-video'}`}></i>
+                        {isCameraActive ? 'Cámara Activa' : 'Activar Cámara'}
                       </button>
                       
-                      <button id="take-photo" onClick={capturePhoto} disabled className="btn-camera btn-success">
+                      <button 
+                        onClick={capturePhoto} 
+                        disabled={!isCameraActive}
+                        className="btn-camera btn-success"
+                      >
                         <i className="fas fa-camera"></i>
                         Capturar Foto
                       </button>
