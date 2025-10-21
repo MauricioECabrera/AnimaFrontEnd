@@ -1,0 +1,137 @@
+.spotify-player {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to right, #1a1a1a, #282828);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.player-track-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 250px;
+}
+
+.player-album-art {
+  width: 56px;
+  height: 56px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.player-track-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.player-track-name {
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-track-artist {
+  color: #b3b3b3;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.player-btn {
+  background: none;
+  border: none;
+  color: #b3b3b3;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 8px;
+}
+
+.player-btn:hover {
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.player-btn-play {
+  background: #fff;
+  color: #000;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-btn-play:hover {
+  transform: scale(1.05);
+  background: #f0f0f0;
+}
+
+.player-progress-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.player-time {
+  color: #b3b3b3;
+  font-size: 12px;
+  min-width: 40px;
+  text-align: center;
+}
+
+.player-progress-bar {
+  flex: 1;
+  height: 4px;
+  background: #4d4d4d;
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+}
+
+.player-progress-fill {
+  height: 100%;
+  background: #1db954;
+  border-radius: 2px;
+  transition: width 0.1s linear;
+}
+
+.player-progress-bar:hover .player-progress-fill {
+  background: #1ed760;
+}
+
+@media (max-width: 768px) {
+  .spotify-player {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .player-track-info {
+    width: 100%;
+  }
+
+  .player-progress-section {
+    width: 100%;
+  }
+}

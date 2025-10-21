@@ -740,3 +740,13 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(83, 52, 131, 0.8);
 }
+
+.song-item:hover {
+  background: rgba(255,255,255,0.1) !important;
+  transform: translateX(5px);
+}
+
+.play-preview-btn:hover {
+  transform: scale(1.1);
+  background: #1ed760 !important;
+}

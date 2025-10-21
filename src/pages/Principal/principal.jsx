@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import SpotifyPlayer from "../../components/SpotifyPlayer"; // ✅ IMPORTAR
 import "./principal.css";
 
 export default function AnimaSimplified() {
@@ -10,6 +11,7 @@ export default function AnimaSimplified() {
   const [analysisVisible, setAnalysisVisible] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCameraActive, setIsCameraActive] = useState(false);
+  const [spotifyToken, setSpotifyToken] = useState(null);
   const navigate = useNavigate();
 
 
@@ -17,15 +19,20 @@ export default function AnimaSimplified() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const jwt = params.get("jwt");
-    const spotifyToken = params.get("spotify");
+    const spotify = params.get("spotify");
 
-    if (jwt && spotifyToken) {
+    if (jwt && spotify) {
       localStorage.setItem("token", jwt);
-      localStorage.setItem("spotifyToken", spotifyToken);
+      localStorage.setItem("spotifyToken", spotify);
       window.history.replaceState({}, document.title, "/principal");
     }
 
-
+    // Cargar el token de Spotify del localStorage
+    const savedSpotifyToken = localStorage.getItem("spotifyToken");
+    if (savedSpotifyToken) {
+      setSpotifyToken(savedSpotifyToken);
+      console.log("✅ Token de Spotify cargado");
+    }
   }, []);
 
   useEffect(() => {
@@ -147,11 +154,14 @@ const confirmPhoto = async () => {
   showNotification('Analizando emoción con inteligencia artificial... 🧠');
 
   try {
+    const spotifyToken = localStorage.getItem('spotifyToken');
+    
     const response = await fetch("http://localhost:4000/emociones/analizar", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        "x-spotify-token": spotifyToken || ""
       },
       body: JSON.stringify({ image: capturedPhoto }),
     });
@@ -163,8 +173,11 @@ const confirmPhoto = async () => {
       return;
     }
 
+    console.log("📊 Respuesta del servidor:", data);
+    console.log("🎵 Playlist recibida:", data.playlist); // ✅ AGREGAR ESTE LOG
+    
     setDetectedEmotion(data.emotion);
-    showAnalysisResults(data.emotion);
+    showAnalysisResults(data.emotion, data.playlist); // ✅ Pasar la playlist
   } catch (error) {
     console.error("Error al analizar emoción:", error);
     showNotification("Error al conectar con el servidor", "error");
@@ -203,7 +216,7 @@ const confirmPhoto = async () => {
     input.click();
   };
 
-  const showAnalysisResults = (emotion) => {
+  const showAnalysisResults = (emotion, playlist) => {
     setAnalysisVisible(true);
     
     const emotionIcon = document.getElementById('emotion-icon');
@@ -214,32 +227,137 @@ const confirmPhoto = async () => {
     if (emotionName) emotionName.textContent = emotion.name;
     if (emotionConfidence) emotionConfidence.textContent = `Confianza: ${emotion.confidence}%`;
     
-    generatePlaylist(emotion.name);
+    console.log("🎭 Mostrando resultados - Playlist:", playlist); // ✅ LOG
+    
+    // Mostrar playlist
+    if (playlist && Array.isArray(playlist) && playlist.length > 0) {
+      console.log("✅ Mostrando", playlist.length, "canciones"); // ✅ LOG
+      displaySpotifyPlaylist(playlist);
+    } else {
+      console.warn("⚠️ No hay playlist para mostrar"); // ✅ LOG
+      displayFallbackPlaylist(emotion.name);
+    }
   };
 
-  const generatePlaylist = (emotion) => {
-    const playlists = {
-      'Felicidad': ['Happy - Pharrell Williams', 'Good as Hell - Lizzo', 'Uptown Funk - Bruno Mars'],
-      'Calma': ['Weightless - Marconi Union', 'River - Joni Mitchell', 'Mad World - Gary Jules'],
-      'Energía': ['Eye of the Tiger - Survivor', 'Thunder - Imagine Dragons', 'High Hopes - Panic!'],
-      'Concentración': ['Clair de Lune - Debussy', 'Gymnopédie No.1 - Satie', 'The Blue Notebooks - Max Richter'],
-      'Tristeza': ['Someone Like You - Adele', 'The Scientist - Coldplay', 'Fix You - Coldplay'],
-      'Sorpresa': ['Bohemian Rhapsody - Queen', 'Mr. Blue Sky - ELO', 'September - Earth, Wind & Fire']
-    };
+  const displaySpotifyPlaylist = (tracks) => {
+  console.log("🎵 displaySpotifyPlaylist llamada con", tracks.length, "canciones");
+  
+  setTimeout(() => {
+    const playlistDiv = document.getElementById('playlist-preview');
     
-    const songs = playlists[emotion] || ['Música personalizada para ti'];
+    if (!playlistDiv) {
+      console.error("❌ No se encontró el elemento playlist-preview");
+      return;
+    }
+    
+    console.log("✅ Elemento playlist-preview encontrado");
+    
+    playlistDiv.innerHTML = tracks.map((track, index) => 
+      `<div class="song-item" style="display: flex; align-items: center; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.05); margin-bottom: 8px; transition: all 0.3s; cursor: pointer;" data-track-uri="${track.uri}">
+        <span style="color: #888; font-weight: bold; margin-right: 12px; min-width: 25px;">${index + 1}</span>
+        <img src="${track.albumImage || '/Assets/logo-anima.png'}" 
+             alt="${track.album}" 
+             style="width: 50px; height: 50px; border-radius: 4px; margin-right: 12px; object-fit: cover;">
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            ${track.name}
+          </div>
+          <div style="font-size: 0.85rem; color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            ${track.artist}
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="play-track-btn" data-track-uri="${track.uri}" 
+                   style="background: #1DB954; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
+            <i class="fas fa-play" style="color: white; font-size: 14px;"></i>
+          </button>
+          <a href="${track.externalUrl}" target="_blank" rel="noopener noreferrer"
+             style="background: rgba(255,255,255,0.1); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: all 0.3s;">
+            <i class="fab fa-spotify" style="color: #1DB954; font-size: 16px;"></i>
+          </a>
+        </div>
+      </div>`
+    ).join('');
+    
+    console.log("✅ HTML de playlist insertado");
+    
+    // Configurar botones de reproducción
+    setupPlayButtons();
+    
+    showNotification('✅ Playlist generada con ' + tracks.length + ' canciones');
+  }, 100);
+};
+
+const setupPlayButtons = () => {
+  const playButtons = document.querySelectorAll('.play-track-btn');
+  
+  console.log("🎧 Configurando", playButtons.length, "botones de reproducción");
+  
+  playButtons.forEach(button => {
+    button.addEventListener('click', async function(e) {
+      e.stopPropagation();
+      const trackUri = this.getAttribute('data-track-uri');
+      
+      console.log("▶️ Reproduciendo track:", trackUri);
+      
+      const spotifyToken = localStorage.getItem('spotifyToken');
+      const deviceId = window.spotifyDeviceId;
+      
+      if (!spotifyToken) {
+        showNotification("Inicia sesión con Spotify para reproducir música", "error");
+        return;
+      }
+      
+      if (!deviceId) {
+        showNotification("Esperando conexión con Spotify...", "error");
+        return;
+      }
+      
+      try {
+        const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${spotifyToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            uris: [trackUri]
+          })
+        });
+        
+        if (response.ok || response.status === 204) {
+          console.log("✅ Canción reproduciendo");
+          showNotification("Reproduciendo canción 🎵");
+        } else {
+          console.error("❌ Error al reproducir:", response.status);
+          showNotification("Error al reproducir. ¿Tienes Spotify Premium?", "error");
+        }
+      } catch (error) {
+        console.error("❌ Error:", error);
+        showNotification("Error al reproducir música", "error");
+      }
+    });
+  });
+};
+
+
+const displayFallbackPlaylist = (emotion) => {
+  setTimeout(() => {
     const playlistDiv = document.getElementById('playlist-preview');
     
     if (playlistDiv) {
-      playlistDiv.innerHTML = songs.map(song => 
-        `<div class="song-item">
-          <i class="fas fa-music"></i>
-          <span>${song}</span>
-          <button class="play-song-btn"><i class="fas fa-play"></i></button>
-        </div>`
-      ).join('');
+      playlistDiv.innerHTML = `
+        <div style="text-align: center; padding: 20px; color: #aaa;">
+          <i class="fas fa-music" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+          <p>No se pudo generar una playlist de Spotify.</p>
+          <p style="font-size: 0.9rem;">Intenta iniciar sesión con Spotify para obtener recomendaciones personalizadas.</p>
+        </div>
+      `;
     }
-  };
+  }, 100);
+};
+
+
 
   const resetCameraInterface = () => {
     const preview = document.getElementById('camera-preview');
@@ -475,6 +593,9 @@ const confirmPhoto = async () => {
           </div>
         </div>
       )}
+
+      {/* ✅ Reproductor de Spotify - AGREGAR AQUÍ */}
+      {spotifyToken && <SpotifyPlayer spotifyToken={spotifyToken} />}
     </div>
   );
 }
