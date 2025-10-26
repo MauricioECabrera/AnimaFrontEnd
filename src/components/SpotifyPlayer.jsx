@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import './SpotifyPlayer.css';
 
 export default function SpotifyPlayer({ spotifyToken }) {
@@ -7,66 +7,128 @@ export default function SpotifyPlayer({ spotifyToken }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
+  const playerRef = useRef(null);
+  const scriptLoadedRef = useRef(false);
 
   useEffect(() => {
-  if (!spotifyToken) return;
+    if (!spotifyToken) return;
 
-  console.log("🎵 Inicializando Spotify Web Playback SDK...");
+    console.log("🎵 Inicializando Spotify Web Playback SDK...");
 
-  let mounted = true;
+    const loadSpotifySDK = () => {
+      return new Promise((resolve) => {
+        // Si ya está cargado
+        if (window.Spotify) {
+          console.log("✅ SDK ya está cargado");
+          resolve();
+          return;
+        }
 
-  const initializePlayer = () => {
-    if (!window.Spotify) {
-      console.warn("⚠️ Spotify SDK no está cargado aún");
-      return;
-    }
+        // Si ya se está cargando
+        if (scriptLoadedRef.current) {
+          console.log("⏳ SDK ya se está cargando...");
+          const checkInterval = setInterval(() => {
+            if (window.Spotify) {
+              clearInterval(checkInterval);
+              resolve();
+            }
+          }, 100);
+          return;
+        }
 
-    const spotifyPlayer = new window.Spotify.Player({
-      name: 'Ánima Web Player',
-      getOAuthToken: cb => { cb(spotifyToken); },
-      volume: 0.5
-    });
+        // Cargar el script
+        scriptLoadedRef.current = true;
+        console.log("📥 Cargando SDK de Spotify...");
 
-    spotifyPlayer.addListener('ready', ({ device_id }) => {
-      if (!mounted) return;
-      console.log('✅ Reproductor listo con Device ID:', device_id);
-      window.spotifyDeviceId = device_id;
-    });
+        const script = document.createElement('script');
+        script.src = 'https://sdk.scdn.co/spotify-player.js';
+        script.async = true;
 
-    spotifyPlayer.addListener('not_ready', ({ device_id }) => {
-      console.log('❌ Device ID desconectado:', device_id);
-    });
+        window.onSpotifyWebPlaybackSDKReady = () => {
+          console.log("✅ SDK de Spotify listo");
+          resolve();
+        };
 
-    spotifyPlayer.addListener('player_state_changed', (state) => {
-      if (!state || !mounted) return;
-      setCurrentTrack(state.track_window.current_track);
-      setIsPlaying(!state.paused);
-      setPosition(state.position);
-      setDuration(state.duration);
-    });
+        script.onerror = () => {
+          console.error("❌ Error al cargar SDK de Spotify");
+          scriptLoadedRef.current = false;
+        };
 
-    spotifyPlayer.connect();
-    if (mounted) {
-      setPlayer(spotifyPlayer, player);
-    }
-  };
+        document.body.appendChild(script);
+      });
+    };
 
-  // Esperar a que el SDK esté listo
-  if (window.Spotify) {
+    const initializePlayer = async () => {
+      if (playerRef.current) {
+        console.log("✅ Player ya existe");
+        return;
+      }
+
+      await loadSpotifySDK();
+
+      console.log("🎵 Creando reproductor...");
+
+      const spotifyPlayer = new window.Spotify.Player({
+        name: 'Ánima Web Player',
+        getOAuthToken: cb => { cb(spotifyToken); },
+        volume: 0.5
+      });
+
+      spotifyPlayer.addListener('ready', ({ device_id }) => {
+        console.log('✅ Reproductor listo con Device ID:', device_id);
+        window.spotifyDeviceId = device_id;
+      });
+
+      spotifyPlayer.addListener('not_ready', ({ device_id }) => {
+        console.log('❌ Device ID desconectado:', device_id);
+      });
+
+      spotifyPlayer.addListener('player_state_changed', (state) => {
+        if (!state) return;
+        
+        console.log('🎵 Estado actualizado');
+        
+        setCurrentTrack(state.track_window.current_track);
+        setIsPlaying(!state.paused);
+        setPosition(state.position);
+        setDuration(state.duration);
+      });
+
+      spotifyPlayer.addListener('authentication_error', ({ message }) => {
+        console.error('❌ Error de autenticación:', message);
+      });
+
+      spotifyPlayer.addListener('account_error', ({ message }) => {
+        console.error('❌ Error de cuenta (Premium requerido):', message);
+      });
+
+      spotifyPlayer.addListener('playback_error', ({ message }) => {
+        console.error('❌ Error de reproducción:', message);
+      });
+
+      const success = await spotifyPlayer.connect();
+      
+      if (success) {
+        console.log('✅ Reproductor conectado');
+        playerRef.current = spotifyPlayer;
+        setPlayer(spotifyPlayer);
+      } else {
+        console.error('❌ No se pudo conectar');
+      }
+    };
+
     initializePlayer();
-  } else {
-    window.onSpotifyWebPlaybackSDKReady = initializePlayer;
-  }
 
-  return () => {
-    mounted = false;
-    if (player) {
-      player.disconnect();
-    }
-  };
-}, [spotifyToken]); 
+    return () => {
+      if (playerRef.current) {
+        console.log('🔌 Desconectando...');
+        playerRef.current.disconnect();
+        playerRef.current = null;
+      }
+    };
+  }, [spotifyToken]);
 
-  // Actualizar posición cada segundo
+  // Actualizar posición
   useEffect(() => {
     if (!isPlaying || !player) return;
 
@@ -79,24 +141,18 @@ export default function SpotifyPlayer({ spotifyToken }) {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isPlaying, player]); // ✅ Agregado player al array
+  }, [isPlaying, player]);
 
   const togglePlay = () => {
-    if (player) {
-      player.togglePlay();
-    }
+    if (player) player.togglePlay();
   };
 
   const skipNext = () => {
-    if (player) {
-      player.nextTrack();
-    }
+    if (player) player.nextTrack();
   };
 
   const skipPrevious = () => {
-    if (player) {
-      player.previousTrack();
-    }
+    if (player) player.previousTrack();
   };
 
   const seek = (e) => {
@@ -105,9 +161,7 @@ export default function SpotifyPlayer({ spotifyToken }) {
     const width = progressBar.offsetWidth;
     const newPosition = (clickX / width) * duration;
     
-    if (player) {
-      player.seek(newPosition);
-    }
+    if (player) player.seek(newPosition);
   };
 
   const formatTime = (ms) => {

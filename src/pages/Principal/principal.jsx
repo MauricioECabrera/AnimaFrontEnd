@@ -300,7 +300,7 @@ const confirmPhoto = async () => {
   };
 
 const setupPlayButtons = () => {
-  const playButtons = document.querySelectorAll('.play-track-btn');
+  const playButtons = document.querySelectorAll('.play-track-btn-new');
   
   console.log("🎧 Configurando", playButtons.length, "botones de reproducción");
   
@@ -309,43 +309,147 @@ const setupPlayButtons = () => {
       e.stopPropagation();
       const trackUri = this.getAttribute('data-track-uri');
       
-      console.log("▶️ Reproduciendo track:", trackUri);
+      console.log("▶️ Intentando reproducir track:", trackUri);
       
       const spotifyToken = localStorage.getItem('spotifyToken');
       const deviceId = window.spotifyDeviceId;
       
       if (!spotifyToken) {
-        showNotification("Inicia sesión con Spotify para reproducir música", "error");
+        showNotification("⚠️ Inicia sesión con Spotify para reproducir música", "error");
         return;
       }
       
       if (!deviceId) {
-        showNotification("Esperando conexión con Spotify...", "error");
+        showNotification("⚠️ Esperando conexión con Spotify... Intenta de nuevo en unos segundos", "error");
+        console.log("❌ No hay deviceId disponible");
         return;
       }
       
+      console.log("✅ Token y deviceId disponibles");
+      console.log("Device ID:", deviceId);
+      
       try {
-        const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+        showNotification("🎵 Activando reproductor...");
+        
+        // PASO 1: Transferir reproducción al dispositivo de Ánima
+        console.log("📱 Transfiriendo reproducción a Ánima...");
+        const transferResponse = await fetch('https://api.spotify.com/v1/me/player', {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${spotifyToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            uris: [trackUri]
+            device_ids: [deviceId],
+            play: false
           })
         });
         
-        if (response.ok || response.status === 204) {
-          console.log("✅ Canción reproduciendo");
-          showNotification("Reproduciendo canción 🎵");
-        } else {
-          console.error("❌ Error al reproducir:", response.status);
-          showNotification("Error al reproducir. ¿Tienes Spotify Premium?", "error");
+        console.log("📡 Transfer response:", transferResponse.status);
+        
+        // PASO 2: Esperar a que el dispositivo se active
+        console.log("⏳ Esperando activación del dispositivo...");
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // PASO 3: Verificar que el dispositivo esté activo
+        console.log("🔍 Verificando dispositivo...");
+        const devicesResponse = await fetch('https://api.spotify.com/v1/me/player/devices', {
+          headers: {
+            'Authorization': `Bearer ${spotifyToken}`
+          }
+        });
+        
+        const devicesData = await devicesResponse.json();
+        console.log("📱 Dispositivos disponibles:", devicesData.devices?.map(d => ({
+        id: d.id,
+        name: d.name,
+        type: d.type,
+        is_active: d.is_active
+        })));
+        console.log("🔍 Buscando device_id:", deviceId);
+        
+        let targetDevice = devicesData.devices?.find(d => d.id === deviceId);
+
+        if (!targetDevice) {
+          console.warn("⚠️ Dispositivo Ánima no encontrado, usando dispositivo activo...");
+          
+          // Buscar cualquier dispositivo activo
+          targetDevice = devicesData.devices?.find(d => d.is_active);
+          
+          if (!targetDevice && devicesData.devices?.length > 0) {
+            // Si no hay ninguno activo, usar el primero
+            targetDevice = devicesData.devices[0];
+            console.log("📱 Usando primer dispositivo disponible:", targetDevice.name);
+          }
+          
+          if (!targetDevice) {
+            console.error("❌ No hay dispositivos disponibles");
+            showNotification("⚠️ No se encontraron dispositivos. Reproduce algo en Spotify Desktop o Web primero", "error");
+            return;
+          }
         }
+
+        console.log("✅ Dispositivo seleccionado:", targetDevice.name, "ID:", targetDevice.id);
+
+        // Asegurarse de que el dispositivo esté activo
+        if (!targetDevice.is_active) {
+          console.log("📱 Activando dispositivo...");
+          await fetch('https://api.spotify.com/v1/me/player', {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${spotifyToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              device_ids: [targetDevice.id],
+              play: false
+            })
+          });
+          
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        // PASO 4: Reproducir la canción
+        console.log("🎵 Reproduciendo canción...");
+        const playResponse = await fetch(`https://api.spotify.com/v1/me/player/play`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${spotifyToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            device_id: targetDevice.id,
+            uris: [trackUri],
+            position_ms: 0
+          })
+        });
+        
+        console.log("📡 Play response:", playResponse.status);
+        
+        if (playResponse.ok || playResponse.status === 204) {
+          console.log("✅ Canción reproduciendo en Ánima");
+          showNotification("🎵 Reproduciendo en Ánima");
+        } else if (playResponse.status === 403) {
+          const errorData = await playResponse.json();
+          console.error("❌ Error 403:", errorData);
+          
+          if (errorData.error?.reason === 'PREMIUM_REQUIRED') {
+            showNotification("⚠️ Se requiere Spotify Premium para reproducir música", "error");
+          } else {
+            showNotification("⚠️ Error de permisos: " + errorData.error?.message, "error");
+          }
+        } else if (playResponse.status === 404) {
+          console.error("❌ Error 404: Dispositivo no encontrado");
+          showNotification("⚠️ Dispositivo no disponible. Abre Spotify Desktop o Web", "error");
+        } else {
+          const errorData = await playResponse.json();
+          console.error("❌ Error al reproducir:", errorData);
+          showNotification("❌ Error: " + (errorData.error?.message || "Error desconocido"), "error");
+        }
+        
       } catch (error) {
-        console.error("❌ Error:", error);
-        showNotification("Error al reproducir música", "error");
+        console.error("❌ Error de conexión:", error);
+        showNotification("❌ Error de conexión con Spotify", "error");
       }
     });
   });
