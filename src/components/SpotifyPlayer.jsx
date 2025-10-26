@@ -9,48 +9,62 @@ export default function SpotifyPlayer({ spotifyToken }) {
   const [duration, setDuration] = useState(0);
 
   useEffect(() => {
-    if (!spotifyToken) return;
+  if (!spotifyToken) return;
 
-    console.log("🎵 Inicializando Spotify Web Playback SDK...");
+  console.log("🎵 Inicializando Spotify Web Playback SDK...");
 
-    window.onSpotifyWebPlaybackSDKReady = () => {
-      const spotifyPlayer = new window.Spotify.Player({
-        name: 'Ánima Web Player',
-        getOAuthToken: cb => { cb(spotifyToken); },
-        volume: 0.5
-      });
+  let mounted = true;
 
-      // Ready
-      spotifyPlayer.addListener('ready', ({ device_id }) => {
-        console.log('✅ Reproductor listo con Device ID:', device_id);
-        window.spotifyDeviceId = device_id; // Guardarlo globalmente
-      });
+  const initializePlayer = () => {
+    if (!window.Spotify) {
+      console.warn("⚠️ Spotify SDK no está cargado aún");
+      return;
+    }
 
-      // Not Ready
-      spotifyPlayer.addListener('not_ready', ({ device_id }) => {
-        console.log('❌ Device ID desconectado:', device_id);
-      });
+    const spotifyPlayer = new window.Spotify.Player({
+      name: 'Ánima Web Player',
+      getOAuthToken: cb => { cb(spotifyToken); },
+      volume: 0.5
+    });
 
-      // Player state changed
-      spotifyPlayer.addListener('player_state_changed', (state) => {
-        if (!state) return;
+    spotifyPlayer.addListener('ready', ({ device_id }) => {
+      if (!mounted) return;
+      console.log('✅ Reproductor listo con Device ID:', device_id);
+      window.spotifyDeviceId = device_id;
+    });
 
-        setCurrentTrack(state.track_window.current_track);
-        setIsPlaying(!state.paused);
-        setPosition(state.position);
-        setDuration(state.duration);
-      });
+    spotifyPlayer.addListener('not_ready', ({ device_id }) => {
+      console.log('❌ Device ID desconectado:', device_id);
+    });
 
-      spotifyPlayer.connect();
-      setPlayer(spotifyPlayer);
-    };
+    spotifyPlayer.addListener('player_state_changed', (state) => {
+      if (!state || !mounted) return;
+      setCurrentTrack(state.track_window.current_track);
+      setIsPlaying(!state.paused);
+      setPosition(state.position);
+      setDuration(state.duration);
+    });
 
-    return () => {
-      if (player) {
-        player.disconnect();
-      }
-    };
-  }, [spotifyToken, player]); // ✅ Agregado player al array
+    spotifyPlayer.connect();
+    if (mounted) {
+      setPlayer(spotifyPlayer, player);
+    }
+  };
+
+  // Esperar a que el SDK esté listo
+  if (window.Spotify) {
+    initializePlayer();
+  } else {
+    window.onSpotifyWebPlaybackSDKReady = initializePlayer;
+  }
+
+  return () => {
+    mounted = false;
+    if (player) {
+      player.disconnect();
+    }
+  };
+}, [spotifyToken]); 
 
   // Actualizar posición cada segundo
   useEffect(() => {

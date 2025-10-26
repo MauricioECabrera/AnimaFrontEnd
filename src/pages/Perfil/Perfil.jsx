@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './Perfil.css';
 
 const Perfil = () => {
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
   // ============================================
   // ESTADO DEL USUARIO - AQUÍ VAN LOS DATOS DEL BACKEND
   // ============================================
@@ -33,136 +34,82 @@ const Perfil = () => {
   // CARGAR DATOS DEL USUARIO - CONECTAR CON BACKEND
   // ============================================
   useEffect(() => {
-    // 🔴 BACKEND: Aquí hacer la petición GET para obtener los datos del usuario
-    const cargarDatosUsuario = async () => {
-      try {
-        setLoading(true);
-        
-        // TODO: Reemplazar con tu endpoint
-        // const response = await fetch('/api/usuario/perfil', {
-        //   headers: {
-        //     'Authorization': `Bearer ${localStorage.getItem('token')}`
-        //   }
-        // });
-        // const data = await response.json();
-        // setUsuario(data);
-        
-        // Simulación de carga (ELIMINAR cuando conectes con backend)
-        setTimeout(() => {
-          setUsuario({
-            nombre: 'José De la Cruz',
-            email: 'jose.delacruz@email.com',
-            fotoPerfil: null,
-            fechaRegistro: '2024-09-01T10:00:00',
-            spotifyConectado: true,
-            spotifyEmail: 'jose.spotify@email.com',
-            spotifyNombre: 'josemusic',
-            spotifyFoto: null,
-            totalAnalisis: 42,
-            emocionFavorita: 'Feliz',
-            emocionFavoritaEmoji: '😊',
-            cancionesFavoritas: 127,
-          });
-          setLoading(false);
-        }, 1000);
-        
-      } catch (error) {
-        console.error('Error al cargar datos del usuario:', error);
-        setLoading(false);
+  const cargarDatosUsuario = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        window.location.href = '/login';
+        return;
       }
-    };
+      
+      const response = await fetch(`${API_URL}/auth/profile`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Error al cargar perfil');
+      }
+      
+      const data = await response.json();
+      setUsuario(data.profile);
+      setLoading(false);
+      
+    } catch (error) {
+      console.error('Error al cargar datos del usuario:', error);
+      setLoading(false);
+    }
+  };
 
-    cargarDatosUsuario();
+  cargarDatosUsuario();
   }, []);
 
   // ============================================
   // GUARDAR CAMBIOS DE NOMBRE - CONECTAR CON BACKEND
   // ============================================
   const handleGuardarNombre = async () => {
-    // 🔴 BACKEND: Aquí hacer la petición PUT/PATCH para actualizar el nombre
-    try {
-      // TODO: Reemplazar con tu endpoint
-      // await fetch('/api/usuario/actualizar', {
-      //   method: 'PUT',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${localStorage.getItem('token')}`
-      //   },
-      //   body: JSON.stringify({ nombre: nuevoNombre })
-      // });
-      
-      setUsuario({ ...usuario, nombre: nuevoNombre });
-      setEditando(false);
-      // Mostrar notificación de éxito
-    } catch (error) {
-      console.error('Error al actualizar nombre:', error);
-      // Mostrar notificación de error
+  try {
+    const token = localStorage.getItem('token');
+    
+    const response = await fetch(`${API_URL}/auth/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ name: nuevoNombre })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Error al actualizar nombre');
     }
-  };
+    
+    const data = await response.json();
+    setUsuario({ ...usuario, nombre: data.name });
+    setEditando(false);
+    
+    alert('✅ Nombre actualizado correctamente');
+    
+  } catch (error) {
+    console.error('Error al actualizar nombre:', error);
+    alert('❌ Error al actualizar el nombre');
+  }
+};
 
-  // ============================================
-  // CAMBIAR FOTO DE PERFIL - CONECTAR CON BACKEND
-  // ============================================
-  const handleCambiarFoto = async (event) => {
-    const archivo = event.target.files[0];
-    if (!archivo) return;
 
-    // 🔴 BACKEND: Aquí hacer la petición POST para subir la foto
-    try {
-      const formData = new FormData();
-      formData.append('foto', archivo);
-
-      // TODO: Reemplazar con tu endpoint
-      // const response = await fetch('/api/usuario/foto', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Authorization': `Bearer ${localStorage.getItem('token')}`
-      //   },
-      //   body: formData
-      // });
-      // const data = await response.json();
-      // setUsuario({ ...usuario, fotoPerfil: data.fotoUrl });
-      
-      // Simulación (ELIMINAR cuando conectes con backend)
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUsuario({ ...usuario, fotoPerfil: reader.result });
-      };
-      reader.readAsDataURL(archivo);
-      
-    } catch (error) {
-      console.error('Error al subir foto:', error);
-    }
-  };
 
   // ============================================
   // CONECTAR/DESCONECTAR SPOTIFY - CONECTAR CON BACKEND
   // ============================================
   const handleSpotifyToggle = async () => {
-    // 🔴 BACKEND: Aquí manejar la conexión/desconexión con Spotify
     if (usuario.spotifyConectado) {
-      // Desconectar Spotify
-      // TODO: Reemplazar con tu endpoint
-      // await fetch('/api/spotify/desconectar', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Authorization': `Bearer ${localStorage.getItem('token')}`
-      //   }
-      // });
-      
-      setUsuario({
-        ...usuario,
-        spotifyConectado: false,
-        spotifyEmail: null,
-        spotifyNombre: null,
-        spotifyFoto: null,
-      });
+      alert('Para desconectar Spotify, contacta con soporte');
     } else {
-      // Conectar Spotify - Redirigir a OAuth
-      // TODO: Reemplazar con tu URL de autenticación de Spotify
-      // window.location.href = '/api/spotify/auth';
-      
-      alert('Redirigiendo a autenticación de Spotify...');
+      // Redirigir al login de Spotify
+      window.location.href = `${API_URL}/auth/spotify/login`;
     }
   };
 
@@ -216,16 +163,6 @@ const Perfil = () => {
                   <i className="fas fa-user"></i>
                 </div>
               )}
-              <label htmlFor="foto-input" className="avatar-edit-btn" title="Cambiar foto">
-                <i className="fas fa-camera"></i>
-              </label>
-              <input
-                id="foto-input"
-                type="file"
-                accept="image/*"
-                onChange={handleCambiarFoto}
-                style={{ display: 'none' }}
-              />
             </div>
 
             <div className="info-section">

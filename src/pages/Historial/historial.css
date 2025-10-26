@@ -443,3 +443,42 @@
   outline: 2px solid var(--bright-cyan);
   outline-offset: 2px;
 }
+
+
+/* ===== PAGINACIÓN ===== */
+.paginacion {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-xl);
+}
+
+.paginacion-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass-effect);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--border-radius);
+  color: var(--white);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.paginacion-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
+}
+
+.paginacion-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.paginacion-info {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9375rem;
+}

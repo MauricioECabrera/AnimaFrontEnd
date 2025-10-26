@@ -2,78 +2,79 @@ import React, { useState, useEffect } from 'react';
 import './historial.css';
 
 const Historial = () => {
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
   const [historial, setHistorial] = useState([]);
   const [filtro, setFiltro] = useState('todos');
   const [loading, setLoading] = useState(true);
+  const [estadisticas, setEstadisticas] = useState(null);
+  const [paginaActual, setPaginaActual] = useState(1);
+  const itemsPorPagina = 9;
 
   // Simular carga de datos (reemplazar con llamada API real)
   useEffect(() => {
-    setTimeout(() => {
-      setHistorial([
-        {
-          id: 1,
-          fecha: '2024-10-15T14:30:00',
-          emocion: 'Feliz',
-          emoji: '😊',
-          confianza: 95.5,
-          canciones: [
-            { titulo: 'Happy', artista: 'Pharrell Williams' },
-            { titulo: 'Good Vibrations', artista: 'The Beach Boys' },
-            { titulo: 'Walking on Sunshine', artista: 'Katrina and The Waves' }
-          ]
-        },
-        {
-          id: 2,
-          fecha: '2024-10-14T09:15:00',
-          emocion: 'Triste',
-          emoji: '😢',
-          confianza: 88.3,
-          canciones: [
-            { titulo: 'Someone Like You', artista: 'Adele' },
-            { titulo: 'The Scientist', artista: 'Coldplay' },
-            { titulo: 'Fix You', artista: 'Coldplay' }
-          ]
-        },
-        {
-          id: 3,
-          fecha: '2024-10-13T18:45:00',
-          emocion: 'Energético',
-          emoji: '⚡',
-          confianza: 92.7,
-          canciones: [
-            { titulo: 'Eye of the Tiger', artista: 'Survivor' },
-            { titulo: "Don't Stop Me Now", artista: 'Queen' },
-            { titulo: 'Stronger', artista: 'Kanye West' }
-          ]
-        },
-        {
-          id: 4,
-          fecha: '2024-10-12T16:20:00',
-          emocion: 'Relajado',
-          emoji: '😌',
-          confianza: 91.2,
-          canciones: [
-            { titulo: 'Weightless', artista: 'Marconi Union' },
-            { titulo: 'Clair de Lune', artista: 'Claude Debussy' },
-            { titulo: 'Strawberry Swing', artista: 'Coldplay' }
-          ]
-        },
-        {
-          id: 5,
-          fecha: '2024-10-11T20:10:00',
-          emocion: 'Enojado',
-          emoji: '😠',
-          confianza: 87.9,
-          canciones: [
-            { titulo: 'Break Stuff', artista: 'Limp Bizkit' },
-            { titulo: 'Killing in the Name', artista: 'Rage Against the Machine' },
-            { titulo: 'Bodies', artista: 'Drowning Pool' }
-          ]
-        }
-      ]);
+  const cargarHistorial = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      // Cargar historial
+      const historialRes = await fetch(`${API_URL}/emociones/historial?limit=50&offset=0`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (!historialRes.ok) throw new Error('Error al cargar historial');
+      
+      const historialData = await historialRes.json();
+      
+      // Mapear emojis
+      const emocionEmojis = {
+        'Felicidad': '😊',
+        'Tristeza': '😢',
+        'Enojo': '😠',
+        'Calma': '😌',
+        'Sorpresa': '😲',
+        'Miedo': '😨',
+        'Disgusto': '🤢',
+        'Confusión': '😕'
+      };
+      
+      // Formatear datos
+      const historialFormateado = historialData.data.map(item => ({
+        id: item.id,
+        fecha: item.created_at,
+        emocion: item.emotion_detected,
+        emoji: emocionEmojis[item.emotion_detected] || '🎭',
+        confianza: parseFloat(item.confidence),
+        allEmotions: item.all_emotions
+      }));
+      
+      setHistorial(historialFormateado);
+
+      // Cargar estadísticas
+      const statsRes = await fetch(`${API_URL}/emociones/stats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setEstadisticas(statsData.estadisticas);
+      }
+      
       setLoading(false);
-    }, 1000);
-  }, []);
+      
+    } catch (error) {
+      console.error('Error al cargar historial:', error);
+      setLoading(false);
+    }
+  };
+
+  cargarHistorial();
+}, []);
 
   const formatearFecha = (fechaISO) => {
     const fecha = new Date(fechaISO);
@@ -88,74 +89,107 @@ const Historial = () => {
   };
 
   const filtrarHistorial = () => {
-    if (filtro === 'todos') return historial;
-    return historial.filter(item => item.emocion.toLowerCase() === filtro.toLowerCase());
+    let historialFiltrado = historial;
+    
+    if (filtro !== 'todos') {
+      historialFiltrado = historial.filter(
+        item => item.emocion.toLowerCase() === filtro.toLowerCase()
+      );
+    }
+    
+    // Paginación
+    const inicio = (paginaActual - 1) * itemsPorPagina;
+    const fin = inicio + itemsPorPagina;
+    
+    return historialFiltrado.slice(inicio, fin);
   };
 
-  const handleEliminar = (id) => {
-    setHistorial(historial.filter(item => item.id !== id));
+  const totalPaginas = Math.ceil(
+    (filtro === 'todos' ? historial : historial.filter(
+      item => item.emocion.toLowerCase() === filtro.toLowerCase()
+    )).length / itemsPorPagina
+  );
+
+  const handleEliminar = async (id) => {
+    if (!window.confirm('¿Estás seguro de eliminar este análisis?')) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Por ahora solo eliminar del estado local
+      // TODO: Crear endpoint DELETE en el backend
+      setHistorial(historial.filter(item => item.id !== id));
+      
+      alert('✅ Análisis eliminado');
+    } catch (error) {
+      console.error('Error al eliminar:', error);
+      alert('❌ Error al eliminar el análisis');
+    }
   };
 
-  return (
-    <div className="historial-container">
-      <div className="historial-header">
-        <h1 className="historial-title">Mi Historial</h1>
-        <p className="historial-subtitle">
-          Revisa tus análisis emocionales anteriores
-        </p>
-      </div>
+return (
+  <div className="historial-container">
+    <div className="historial-header">
+      <h1 className="historial-title">Mi Historial</h1>
+      <p className="historial-subtitle">
+        Revisa tus análisis emocionales anteriores
+      </p>
+    </div>
 
-      <div className="historial-filtros">
-        <button 
-          className={`filtro-btn ${filtro === 'todos' ? 'active' : ''}`}
-          onClick={() => setFiltro('todos')}
-        >
-          <i className="fas fa-list"></i>
-          Todos
-        </button>
-        <button 
-          className={`filtro-btn ${filtro === 'feliz' ? 'active' : ''}`}
-          onClick={() => setFiltro('feliz')}
-        >
-          <i className="fas fa-smile"></i>
-          Feliz
-        </button>
-        <button 
-          className={`filtro-btn ${filtro === 'triste' ? 'active' : ''}`}
-          onClick={() => setFiltro('triste')}
-        >
-          <i className="fas fa-sad-tear"></i>
-          Triste
-        </button>
-        <button 
-          className={`filtro-btn ${filtro === 'energético' ? 'active' : ''}`}
-          onClick={() => setFiltro('energético')}
-        >
-          <i className="fas fa-bolt"></i>
-          Energético
-        </button>
-        <button 
-          className={`filtro-btn ${filtro === 'relajado' ? 'active' : ''}`}
-          onClick={() => setFiltro('relajado')}
-        >
-          <i className="fas fa-spa"></i>
-          Relajado
-        </button>
-      </div>
+    <div className="historial-filtros">
+      <button 
+        className={`filtro-btn ${filtro === 'todos' ? 'active' : ''}`}
+        onClick={() => { setFiltro('todos'); setPaginaActual(1); }}
+      >
+        <i className="fas fa-list"></i>
+        Todos ({historial.length})
+      </button>
+      <button 
+        className={`filtro-btn ${filtro === 'felicidad' ? 'active' : ''}`}
+        onClick={() => { setFiltro('felicidad'); setPaginaActual(1); }}
+      >
+        😊 Felicidad
+      </button>
+      <button 
+        className={`filtro-btn ${filtro === 'tristeza' ? 'active' : ''}`}
+        onClick={() => { setFiltro('tristeza'); setPaginaActual(1); }}
+      >
+        😢 Tristeza
+      </button>
+      <button 
+        className={`filtro-btn ${filtro === 'calma' ? 'active' : ''}`}
+        onClick={() => { setFiltro('calma'); setPaginaActual(1); }}
+      >
+        😌 Calma
+      </button>
+      <button 
+        className={`filtro-btn ${filtro === 'enojo' ? 'active' : ''}`}
+        onClick={() => { setFiltro('enojo'); setPaginaActual(1); }}
+      >
+        😠 Enojo
+      </button>
+      <button 
+        className={`filtro-btn ${filtro === 'sorpresa' ? 'active' : ''}`}
+        onClick={() => { setFiltro('sorpresa'); setPaginaActual(1); }}
+      >
+        😲 Sorpresa
+      </button>
+    </div>
 
-      <div className="historial-content">
-        {loading ? (
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Cargando historial...</p>
-          </div>
-        ) : filtrarHistorial().length === 0 ? (
-          <div className="empty-state">
-            <i className="fas fa-inbox"></i>
-            <h3>No hay registros</h3>
-            <p>No tienes análisis guardados todavía</p>
-          </div>
-        ) : (
+    <div className="historial-content">
+      {loading ? (
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Cargando historial...</p>
+        </div>
+      ) : filtrarHistorial().length === 0 ? (
+        <div className="empty-state">
+          <i className="fas fa-inbox"></i>
+          <h3>No hay registros</h3>
+          <p>No tienes análisis guardados todavía</p>
+        </div>
+      ) : (
+        <>
           <div className="historial-grid">
             {filtrarHistorial().map((item) => (
               <div key={item.id} className="historial-card">
@@ -182,36 +216,39 @@ const Historial = () => {
                   <i className="far fa-calendar"></i>
                   {formatearFecha(item.fecha)}
                 </div>
-
-                <div className="card-songs">
-                  <h4 className="songs-title">
-                    <i className="fas fa-music"></i>
-                    Canciones recomendadas
-                  </h4>
-                  <ul className="songs-list">
-                    {item.canciones.map((cancion, index) => (
-                      <li key={index} className="song-item">
-                        <span className="song-number">{index + 1}</span>
-                        <div className="song-details">
-                          <span className="song-title">{cancion.titulo}</span>
-                          <span className="song-artist">{cancion.artista}</span>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <button className="replay-btn">
-                  <i className="fas fa-redo"></i>
-                  Reproducir playlist
-                </button>
               </div>
             ))}
           </div>
-        )}
-      </div>
+
+          {/* Paginación */}
+          {totalPaginas > 1 && (
+            <div className="paginacion">
+              <button
+                onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
+                disabled={paginaActual === 1}
+                className="paginacion-btn"
+              >
+                <i className="fas fa-chevron-left"></i>
+              </button>
+              <span className="paginacion-info">
+                Página {paginaActual} de {totalPaginas}
+              </span>
+              <button
+                onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
+                disabled={paginaActual === totalPaginas}
+                className="paginacion-btn"
+              >
+                <i className="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
-  );
+  </div>
+  )
 };
+
+
 
 export default Historial;

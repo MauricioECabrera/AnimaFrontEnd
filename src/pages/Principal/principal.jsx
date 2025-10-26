@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import SpotifyPlayer from "../../components/SpotifyPlayer"; // ✅ IMPORTAR
+import SpotifyPlayer from "../../components/SpotifyPlayer"; 
 import "./principal.css";
 
 export default function AnimaSimplified() {
@@ -188,10 +188,22 @@ const confirmPhoto = async () => {
   const uploadPhoto = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/*';
+    input.accept = 'image/jpeg,image/jpg,image/png,image/webp,image/gif,image/bmp';
     input.onchange = function(e) {
       const file = e.target.files[0];
       if (file) {
+        // Validar que sea una imagen
+        if (!file.type.startsWith('image/')) {
+          showNotification('Por favor selecciona un archivo de imagen válido', 'error');
+          return;
+        }
+
+        // Validar tamaño (máximo 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          showNotification('La imagen es demasiado grande. Máximo 10MB', 'error');
+          return;
+        }
+
         const reader = new FileReader();
         reader.onload = function(e) {
           const photoDataUrl = e.target.result;
@@ -209,6 +221,9 @@ const confirmPhoto = async () => {
           }
           
           showNotification('Imagen cargada correctamente');
+        };
+        reader.onerror = function() {
+          showNotification('Error al cargar la imagen', 'error');
         };
         reader.readAsDataURL(file);
       }
@@ -240,53 +255,49 @@ const confirmPhoto = async () => {
   };
 
   const displaySpotifyPlaylist = (tracks) => {
-  console.log("🎵 displaySpotifyPlaylist llamada con", tracks.length, "canciones");
-  
-  setTimeout(() => {
-    const playlistDiv = document.getElementById('playlist-preview');
+    console.log("🎵 displaySpotifyPlaylist llamada con", tracks.length, "canciones");
     
-    if (!playlistDiv) {
-      console.error("❌ No se encontró el elemento playlist-preview");
-      return;
-    }
-    
-    console.log("✅ Elemento playlist-preview encontrado");
-    
-    playlistDiv.innerHTML = tracks.map((track, index) => 
-      `<div class="song-item" style="display: flex; align-items: center; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.05); margin-bottom: 8px; transition: all 0.3s; cursor: pointer;" data-track-uri="${track.uri}">
-        <span style="color: #888; font-weight: bold; margin-right: 12px; min-width: 25px;">${index + 1}</span>
-        <img src="${track.albumImage || '/Assets/logo-anima.png'}" 
-             alt="${track.album}" 
-             style="width: 50px; height: 50px; border-radius: 4px; margin-right: 12px; object-fit: cover;">
-        <div style="flex: 1; min-width: 0;">
-          <div style="font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-            ${track.name}
+    setTimeout(() => {
+      const playlistDiv = document.getElementById('playlist-preview');
+      
+      if (!playlistDiv) {
+        console.error("❌ No se encontró el elemento playlist-preview");
+        return;
+      }
+      
+      console.log("✅ Elemento playlist-preview encontrado");
+      
+      playlistDiv.innerHTML = tracks.map((track, index) => 
+        `<div class="song-item-new" data-track-uri="${track.uri}">
+          <div class="song-left">
+            <span class="song-number-new">${index + 1}</span>
+            <img src="${track.albumImage || '/Assets/logo-anima.png'}" 
+                alt="${track.album}" 
+                class="song-album-img">
+            <div class="song-info-new">
+              <div class="song-name-new">${track.name}</div>
+              <div class="song-artist-new">${track.artist}</div>
+            </div>
           </div>
-          <div style="font-size: 0.85rem; color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-            ${track.artist}
+          <div class="song-actions">
+            <button class="play-track-btn-new" data-track-uri="${track.uri}" title="Reproducir">
+              <i class="fas fa-play"></i>
+            </button>
+            <a href="${track.externalUrl}" target="_blank" rel="noopener noreferrer" 
+              class="spotify-link-new" title="Abrir en Spotify">
+              <i class="fab fa-spotify"></i>
+            </a>
           </div>
-        </div>
-        <div style="display: flex; gap: 8px;">
-          <button class="play-track-btn" data-track-uri="${track.uri}" 
-                   style="background: #1DB954; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
-            <i class="fas fa-play" style="color: white; font-size: 14px;"></i>
-          </button>
-          <a href="${track.externalUrl}" target="_blank" rel="noopener noreferrer"
-             style="background: rgba(255,255,255,0.1); border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: all 0.3s;">
-            <i class="fab fa-spotify" style="color: #1DB954; font-size: 16px;"></i>
-          </a>
-        </div>
-      </div>`
-    ).join('');
-    
-    console.log("✅ HTML de playlist insertado");
-    
-    // Configurar botones de reproducción
-    setupPlayButtons();
-    
-    showNotification('✅ Playlist generada con ' + tracks.length + ' canciones');
-  }, 100);
-};
+        </div>`
+      ).join('');
+      
+      console.log("✅ HTML de playlist insertado");
+      
+      setupPlayButtons();
+      
+      showNotification('✅ Playlist generada con ' + tracks.length + ' canciones');
+    }, 100);
+  };
 
 const setupPlayButtons = () => {
   const playButtons = document.querySelectorAll('.play-track-btn');
@@ -439,163 +450,177 @@ const displayFallbackPlaylist = (emotion) => {
     }
   };
 
-  return (
-    <div className="app-container">
-      {/* Sidebar */}
-      <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
-        <div className="sidebar-content">
-          {/* Logo */}
-          <div className="sidebar-logo">
-            <div className="logo-icon">
-              <span>🎵</span>
-            </div>
-            <h1 className="logo-text">Ánima</h1>
+return (
+  <div className="app-container">
+    {/* Sidebar */}
+    <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
+      <div className="sidebar-content">
+        {/* Logo */}
+        <div className="sidebar-logo">
+          <div className="logo-icon">
+            <span>🎵</span>
           </div>
+          <h1 className="logo-text">Ánima</h1>
+        </div>
 
-          {/* Menu Items */}
-          <nav className="sidebar-nav">
-            <button onClick={() => navigate('/perfil')} className="nav-item">
-              <i className="fas fa-user"></i>
-              <span>Perfil</span>
-            </button>
-            
-            <button onClick={() => navigate('/historial')} className="nav-item">
-              <i className="fas fa-history"></i>
-              <span>Historial</span>
-            </button>
+        {/* Menu Items */}
+        <nav className="sidebar-nav">
+          <button onClick={() => navigate('/perfil')} className="nav-item">
+            <i className="fas fa-user"></i>
+            <span>Perfil</span>
+          </button>
+          
+          <button onClick={() => navigate('/historial')} className="nav-item">
+            <i className="fas fa-history"></i>
+            <span>Historial</span>
+          </button>
 
-            <button onClick={() => navigate('/configuracion')} className="nav-item">
-              <i className="fas fa-cog"></i>
-              <span>Configuración</span>
-            </button>
-          </nav>
+          <button onClick={() => navigate('/configuracion')} className="nav-item">
+            <i className="fas fa-cog"></i>
+            <span>Configuración</span>
+          </button>
+        </nav>
 
-          {/* Logout Button */}
-          <button onClick={handleLogout} className="logout-button">
-            <i className="fas fa-sign-out-alt"></i>
-            <span>Salir</span>
+        {/* Logout Button */}
+        <button onClick={handleLogout} className="logout-button">
+          <i className="fas fa-sign-out-alt"></i>
+          <span>Salir</span>
+        </button>
+      </div>
+    </aside>
+
+    {/* Mobile Menu Toggle */}
+    <button onClick={() => setSidebarOpen(!sidebarOpen)} className="mobile-menu-toggle">
+      <i className={`fas ${sidebarOpen ? 'fa-times' : 'fa-bars'}`}></i>
+    </button>
+
+    {/* Main Content */}
+    <main className="main-content">
+      <div className="main-container">
+        {/* Main Question Card */}
+        <div className="question-card">
+          <h2 className="question-title">¿Cómo me siento?</h2>
+          
+          {/* Camera Button */}
+          <button onClick={openEmotionAnalysis} className="camera-button">
+            <i className="fas fa-camera"></i>
+            <span>Tomar foto</span>
           </button>
         </div>
-      </aside>
 
-      {/* Mobile Menu Toggle */}
-      <button onClick={() => setSidebarOpen(!sidebarOpen)} className="mobile-menu-toggle">
-        <i className={`fas ${sidebarOpen ? 'fa-times' : 'fa-bars'}`}></i>
-      </button>
-
-      {/* Main Content */}
-      <main className="main-content">
-        <div className="main-container">
-          {/* Main Question Card */}
-          <div className="question-card">
-            <h2 className="question-title">¿Cómo me siento?</h2>
-            
-            {/* Camera Button */}
-            <button onClick={openEmotionAnalysis} className="camera-button">
-              <i className="fas fa-camera"></i>
-              <span>Tomar foto</span>
-            </button>
+        {/* Lo último que escuchaste */}
+        <div className="recent-activity-card">
+          <h3 className="recent-title">
+            <i className="fas fa-history"></i>
+            Lo último que escuchaste
+          </h3>
+          <div className="recent-content">
+            <i className="fas fa-music recent-icon"></i>
+            <p className="recent-text">
+              Aún no has escuchado nada. ¡Analiza tu emoción y descubre música perfecta para ti!
+            </p>
           </div>
         </div>
-      </main>
+      </div>
+    </main>
 
-      {/* Emotion Analysis Modal */}
-      {emotionPopup && (
-        <div className="modal-overlay">
-          <div className="modal-container">
-            {/* Modal Header */}
-            <div className="modal-header">
-              <h3 className="modal-title">Análisis de Emoción</h3>
-              <button onClick={closeEmotionModal} className="close-button">
-                <i className="fas fa-times"></i>
-              </button>
-            </div>
+    {/* Emotion Analysis Modal */}
+    {emotionPopup && (
+      <div className="modal-overlay">
+        <div className="modal-container">
+          {/* Modal Header */}
+          <div className="modal-header">
+            <h3 className="modal-title">Análisis de Emoción</h3>
+            <button onClick={closeEmotionModal} className="close-button">
+              <i className="fas fa-times"></i>
+            </button>
+          </div>
 
-            {/* Modal Content */}
-            <div className="modal-content">
-              {/* Camera Section */}
-              <div className="camera-section">
-                <div id="camera-preview" className="camera-preview">
-                  <i className="fas fa-camera camera-icon"></i>
-                  <p>Activa tu cámara para comenzar</p>
-                </div>
-
-                {/* Camera Controls */}
-                <div className="camera-controls">
-                  {!capturedPhoto ? (
-                    <>
-                      <button 
-                        onClick={startCamera} 
-                        disabled={isCameraActive}
-                        className="btn-camera btn-primary"
-                      >
-                        <i className={`fas ${isCameraActive ? 'fa-check' : 'fa-video'}`}></i>
-                        {isCameraActive ? 'Cámara Activa' : 'Activar Cámara'}
-                      </button>
-                      
-                      <button 
-                        onClick={capturePhoto} 
-                        disabled={!isCameraActive}
-                        className="btn-camera btn-success"
-                      >
-                        <i className="fas fa-camera"></i>
-                        Capturar Foto
-                      </button>
-                      
-                      <button onClick={uploadPhoto} className="btn-camera btn-secondary">
-                        <i className="fas fa-upload"></i>
-                        Subir Imagen
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button onClick={retakePhoto} className="btn-camera btn-warning">
-                        <i className="fas fa-redo"></i>
-                        Tomar otra foto
-                      </button>
-                      
-                      <button onClick={confirmPhoto} className="btn-camera btn-success" disabled={analysisVisible}>
-                        <i className="fas fa-check"></i>
-                        Confirmar y analizar
-                      </button>
-                    </>
-                  )}
-                </div>
+          {/* Modal Content */}
+          <div className="modal-content">
+            {/* Camera Section */}
+            <div className="camera-section">
+              <div id="camera-preview" className="camera-preview">
+                <i className="fas fa-camera camera-icon"></i>
+                <p>Activa tu cámara para comenzar</p>
               </div>
 
-              {/* Analysis Results */}
-              {analysisVisible && detectedEmotion && (
-                <div className="analysis-section">
-                  <div className="analysis-grid">
-                    {/* Emotion Display */}
-                    <div className="emotion-display">
-                      <div id="emotion-icon" className="emotion-icon">{detectedEmotion.icon}</div>
-                      <h4 id="emotion-name" className="emotion-name">{detectedEmotion.name}</h4>
-                      <p id="emotion-confidence" className="emotion-confidence">
-                        Confianza: {detectedEmotion.confidence}%
-                      </p>
-                    </div>
+              {/* Camera Controls */}
+              <div className="camera-controls">
+                {!capturedPhoto ? (
+                  <>
+                    <button 
+                      onClick={startCamera} 
+                      disabled={isCameraActive}
+                      className="btn-camera btn-primary"
+                    >
+                      <i className={`fas ${isCameraActive ? 'fa-check' : 'fa-video'}`}></i>
+                      {isCameraActive ? 'Cámara Activa' : 'Activar Cámara'}
+                    </button>
+                    
+                    <button 
+                      onClick={capturePhoto} 
+                      disabled={!isCameraActive}
+                      className="btn-camera btn-success"
+                    >
+                      <i className="fas fa-camera"></i>
+                      Capturar Foto
+                    </button>
+                    
+                    <button onClick={uploadPhoto} className="btn-camera btn-secondary">
+                      <i className="fas fa-upload"></i>
+                      Subir Imagen
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={retakePhoto} className="btn-camera btn-warning">
+                      <i className="fas fa-redo"></i>
+                      Tomar otra foto
+                    </button>
+                    
+                    <button onClick={confirmPhoto} className="btn-camera btn-success" disabled={analysisVisible}>
+                      <i className="fas fa-check"></i>
+                      Confirmar y analizar
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
 
-                    {/* Music Recommendations */}
-                    <div className="music-section">
-                      <h5 className="music-title">Recomendaciones musicales:</h5>
-                      <div id="playlist-preview" className="playlist-preview">
-                        <div className="loading-music">
-                          <i className="fas fa-spinner fa-spin"></i>
-                          <span>Generando playlist...</span>
-                        </div>
+            {/* Analysis Results */}
+            {analysisVisible && detectedEmotion && (
+              <div className="analysis-section">
+                {/* Emoción centrada */}
+                <div className="emotion-result-centered">
+                  <div className="emotion-icon-large" id="emotion-icon">{detectedEmotion.icon}</div>
+                  <h3 className="emotion-name-large" id="emotion-name">{detectedEmotion.name}</h3>
+                  <p className="emotion-confidence-large" id="emotion-confidence">
+                    Confianza: {detectedEmotion.confidence}%
+                  </p>
+                </div>
+
+                <div className="analysis-grid">
+                  {/* Music Recommendations */}
+                  <div className="music-section">
+                    <h5 className="music-title">🎵 Tu Playlist Personalizada:</h5>
+                    <div id="playlist-preview" className="playlist-preview">
+                      <div className="loading-music">
+                        <i className="fas fa-spinner fa-spin"></i>
+                        <span>Generando playlist...</span>
                       </div>
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
+    )}
 
-      {/* ✅ Reproductor de Spotify - AGREGAR AQUÍ */}
-      {spotifyToken && <SpotifyPlayer spotifyToken={spotifyToken} />}
-    </div>
-  );
+    {/* ✅ Reproductor de Spotify */}
+    {spotifyToken && <SpotifyPlayer spotifyToken={spotifyToken} />}
+  </div>
+);
 }
