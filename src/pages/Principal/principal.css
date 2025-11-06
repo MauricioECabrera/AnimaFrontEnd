@@ -951,3 +951,230 @@ body {
 .spotify-link-new i {
   font-size: 14px;
 }
+
+
+/* ===== HISTORIAL RECIENTE ===== */
+
+.loading-recent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.loading-recent i {
+  font-size: 2rem;
+  color: var(--bright-cyan);
+}
+
+.loading-recent p {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.recent-tracks-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  width: 100%;
+}
+
+.recent-track-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--border-radius);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.recent-track-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(4px);
+}
+
+.recent-track-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex: 1;
+  min-width: 0;
+}
+
+.recent-track-img {
+  width: 50px;
+  height: 50px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.recent-track-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recent-track-name {
+  font-weight: 600;
+  color: var(--white);
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recent-track-artist {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recent-track-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.recent-play-btn,
+.recent-spotify-link {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  text-decoration: none;
+}
+
+.recent-play-btn {
+  background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+  color: white;
+}
+
+.recent-play-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(29, 185, 84, 0.4);
+}
+
+.recent-spotify-link {
+  background: rgba(255, 255, 255, 0.1);
+  color: #1DB954;
+}
+
+.recent-spotify-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.recent-play-btn i,
+.recent-spotify-link i {
+  font-size: 16px;
+}
+
+/* Animación de entrada */
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.recent-track-item {
+  animation: slideInFromLeft 0.3s ease-out;
+}
+
+.recent-track-item:nth-child(1) { animation-delay: 0s; }
+.recent-track-item:nth-child(2) { animation-delay: 0.1s; }
+.recent-track-item:nth-child(3) { animation-delay: 0.2s; }
+.recent-track-item:nth-child(4) { animation-delay: 0.3s; }
+.recent-track-item:nth-child(5) { animation-delay: 0.4s; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .recent-track-item {
+    padding: var(--spacing-sm);
+  }
+
+  .recent-track-img {
+    width: 45px;
+    height: 45px;
+  }
+
+  .recent-track-name {
+    font-size: 0.9375rem;
+  }
+
+  .recent-track-artist {
+    font-size: 0.8125rem;
+  }
+
+  .recent-play-btn,
+  .recent-spotify-link {
+    width: 36px;
+    height: 36px;
+  }
+
+  .recent-play-btn i,
+  .recent-spotify-link i {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .recent-tracks-list {
+    gap: var(--spacing-sm);
+  }
+
+  .recent-track-item {
+    padding: 10px;
+  }
+
+  .recent-track-img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .recent-track-left {
+    gap: var(--spacing-sm);
+  }
+
+  .recent-track-name {
+    font-size: 0.875rem;
+  }
+
+  .recent-track-artist {
+    font-size: 0.75rem;
+  }
+
+  .recent-track-actions {
+    gap: 6px;
+  }
+
+  .recent-play-btn,
+  .recent-spotify-link {
+    width: 34px;
+    height: 34px;
+  }
+
+  .recent-play-btn i,
+  .recent-spotify-link i {
+    font-size: 13px;
+  }
+}

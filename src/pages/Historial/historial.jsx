@@ -44,12 +44,12 @@ const Historial = () => {
       };
       
       // Formatear datos
-      const historialFormateado = historialData.data.map(item => ({
+      const historialFormateado = historialData.historial.map(item => ({
         id: item.id,
-        fecha: item.created_at,
-        emocion: item.emotion_detected,
-        emoji: emocionEmojis[item.emotion_detected] || '🎭',
-        confianza: parseFloat(item.confidence),
+        fecha: item.fecha_analisis,
+        emocion: item.emocion_detectada,
+        emoji: emocionEmojis[item.emocion_detectada] || '🎭',
+        confianza: parseFloat(item.confianza),
         allEmotions: item.all_emotions
       }));
       
