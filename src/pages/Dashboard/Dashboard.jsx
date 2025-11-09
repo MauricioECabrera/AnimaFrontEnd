@@ -24,11 +24,15 @@ export default function Dashboard() {
       setLoading(true);
       const token = localStorage.getItem("token");
       
-      const response = await fetch(`http://localhost:4000/emociones/historial?periodo=${selectedPeriod}`, {
-        headers: {
-          "Authorization": `Bearer ${token}`
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/emociones/historial?periodo=${selectedPeriod}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
         }
-      });
+      );
+
 
       if (response.ok) {
         const data = await response.json();
