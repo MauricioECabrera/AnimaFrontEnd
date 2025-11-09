@@ -13,10 +13,11 @@ export default function ProtectedRoute({ children }) {
     }
 
     // Verificamos el token con el backend
-    fetch("http://localhost:4000/auth/verify-token", {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
-    })
+      fetch(`${process.env.REACT_APP_API_URL}/auth/verify-token`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
       .then((res) => {
         if (res.ok) setIsAuth(true);
         else setIsAuth(false);
