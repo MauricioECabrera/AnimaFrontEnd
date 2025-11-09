@@ -50,10 +50,8 @@ function ProtectedRoute({ children }) {
     if (jwt) {
       fetch(`${process.env.REACT_APP_API_URL}/auth/verify-token`, {
         method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${jwt}` },
       })
-
-
         .then((res) => {
           if (res.ok) {
             setIsAuth(true);
